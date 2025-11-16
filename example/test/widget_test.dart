@@ -76,7 +76,7 @@ void main() {
     // expect(find.text('Peter Pan'), findsOneWidget);
 
     // Expand Peter Pan to see his child. Find the icon within the 'Peter Pan' row.
-    final peterPanRow = find.ancestor(
+    find.ancestor(
       of: find.text('Peter Pan'),
       matching: find.byType(InkWell),
     );
