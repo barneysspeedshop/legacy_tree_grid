@@ -1,3 +1,5 @@
+![](https://img.shields.io/badge/coverage-96%25-brightgreen)
+
 A powerful, flexible, and feature-rich data grid for Flutter, designed to handle client-side, server-side, and hierarchical (tree) data with ease.
 
 The `legacy_tree_grid` provides a set of high-level widgets that simplify the display of tabular data, whether it's a small list managed on the client or a large, paginated dataset from a server.
