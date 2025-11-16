@@ -236,6 +236,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
   String? _hoveredRowId;
   String? _selectedRowId;
   bool _widthsInitialized = false;
+  BoxConstraints? _lastConstraints;
   late final ScrollController _scrollController;
   static const double _checkboxColumnWidth = 32.0;
 
@@ -501,9 +502,14 @@ class _CustomDataTableState extends State<CustomDataTable> {
     // The core table layout, which is a Column containing the header, filters, and rows.
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Recalculate widths if they haven't been initialized or if they
-        // are not being managed by user resizing (i.e., initialColumnWidths is null).
-        if (!_widthsInitialized || widget.initialColumnWidths == null) {
+        // Determine if a recalculation is needed. This happens on the first build,
+        // or if the constraints have changed and we are not using fixed initial widths.
+        final bool constraintsChanged = _lastConstraints != constraints;
+        if (constraintsChanged) {
+          _lastConstraints = constraints;
+        }
+
+        if (constraintsChanged && widget.initialColumnWidths == null) {
           // Post a frame callback to avoid calling setState during a build.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
