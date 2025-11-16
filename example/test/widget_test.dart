@@ -19,10 +19,12 @@ void main() {
     // --- Test Name Filter ---
     // Find the filter text field for the 'Name' column.
     // We find it by looking for a TextField that is a descendant of the filter row.
-    final nameFilterField = find.descendant(
-      of: find.byType(UnifiedDataGrid<dynamic>),
-      matching: find.widgetWithText(TextField, 'Filter...'),
-    ).first;
+    final nameFilterField = find
+        .descendant(
+          of: find.byType(UnifiedDataGrid<dynamic>),
+          matching: find.widgetWithText(TextField, 'Filter...'),
+        )
+        .first;
 
     expect(nameFilterField, findsOneWidget);
 
@@ -51,10 +53,12 @@ void main() {
 
     // --- Test Numeric Age Filter ---
     // Find the filter text field for the 'Age' column.
-    final ageFilterField = find.descendant(
-      of: find.byType(UnifiedDataGrid<dynamic>),
-      matching: find.widgetWithText(TextField, 'Filter...'),
-    ).last;
+    final ageFilterField = find
+        .descendant(
+          of: find.byType(UnifiedDataGrid<dynamic>),
+          matching: find.widgetWithText(TextField, 'Filter...'),
+        )
+        .last;
 
     expect(ageFilterField, findsOneWidget);
 

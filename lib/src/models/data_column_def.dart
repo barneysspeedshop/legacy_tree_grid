@@ -13,7 +13,7 @@ class DataColumnDef {
   /// A unique identifier for the column, used for sorting and data mapping.
   /// It can be a nested path like 'user.name'.
   final String id;
-  
+
   /// The text to display in the column header.
   final String caption;
 
@@ -48,7 +48,7 @@ class DataColumnDef {
   /// An optional custom builder for rendering the cell content.
   /// If not provided, a default `Text` widget will be used.
   final Widget? Function(BuildContext context, Map<String, dynamic> rowData)?
-      cellBuilder;
+  cellBuilder;
 
   /// For `FilterType.list`, this provides the dropdown options.
   final List<String>? filterOptions;
@@ -80,7 +80,10 @@ class DataColumnDef {
   /// An optional builder for creating context menu items for a row.
   /// If provided, this will be used to show a context menu on secondary-click/long-press.
   final List<ContextMenuItem> Function(
-      BuildContext context, Map<String, dynamic> rowData)? itemsBuilder;
+    BuildContext context,
+    Map<String, dynamic> rowData,
+  )?
+  itemsBuilder;
 
   DataColumnDef({
     required this.id,
@@ -100,12 +103,20 @@ class DataColumnDef {
     this.showOnRowHover = false,
     this.resizable = true,
     this.itemsBuilder,
-  }) : alignment = alignment ??
-            (filterType == FilterType.numeric ? TextAlign.right : TextAlign.left),
-       assert(flex != null || width != null,
-            'Either flex or width must be provided for a column.'),
-       assert(filterType != FilterType.list || (filterOptions != null && filterOptions.isNotEmpty),
-            'If filterType is list, filterOptions must be provided and not empty.');
+  }) : alignment =
+           alignment ??
+           (filterType == FilterType.numeric
+               ? TextAlign.right
+               : TextAlign.left),
+       assert(
+         flex != null || width != null,
+         'Either flex or width must be provided for a column.',
+       ),
+       assert(
+         filterType != FilterType.list ||
+             (filterOptions != null && filterOptions.isNotEmpty),
+         'If filterType is list, filterOptions must be provided and not empty.',
+       );
 
   /// A factory for creating a standard, non-resizable "Actions" column.
   ///
@@ -116,8 +127,10 @@ class DataColumnDef {
     String caption = '',
     double width = 30.0,
     required List<ContextMenuItem> Function(
-            BuildContext context, Map<String, dynamic> rowData)
-        itemsBuilder,
+      BuildContext context,
+      Map<String, dynamic> rowData,
+    )
+    itemsBuilder,
     bool showOnRowHover = true,
   }) {
     return DataColumnDef(
@@ -142,16 +155,20 @@ class DataColumnDef {
                   final RenderBox button =
                       buttonContext.findRenderObject() as RenderBox;
                   // Position the menu at the bottom-left of the button.
-                  final Offset position =
-                      button.localToGlobal(Offset(0, button.size.height));
+                  final Offset position = button.localToGlobal(
+                    Offset(0, button.size.height),
+                  );
 
                   showContextMenu(
-                      context: context,
-                      tapPosition: position,
-                      menuItems: itemsBuilder(context, rowData));
+                    context: context,
+                    tapPosition: position,
+                    menuItems: itemsBuilder(context, rowData),
+                  );
                 },
                 child: const Padding(
-                  padding: EdgeInsets.all(4.0), // Smaller padding for the tap target
+                  padding: EdgeInsets.all(
+                    4.0,
+                  ), // Smaller padding for the tap target
                   child: FaIcon(FontAwesomeIcons.ellipsis, size: 16),
                 ),
               ),

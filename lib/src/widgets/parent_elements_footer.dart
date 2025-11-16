@@ -20,22 +20,22 @@ class ParentElementsFooter extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
-        child: Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-      InkWell(
-        onTap: () {
-          onShowParentElementsOnlyChanged(!showParentElementsOnly);
-        },
-        child: Row(
-            children: [
-              Checkbox(
-                value: showParentElementsOnly,
-                onChanged: onShowParentElementsOnlyChanged,
-              ),
-              const Text('Show Parent Elements Only'),
-            ],
-          ),
+          InkWell(
+            onTap: () {
+              onShowParentElementsOnlyChanged(!showParentElementsOnly);
+            },
+            child: Row(
+              children: [
+                Checkbox(
+                  value: showParentElementsOnly,
+                  onChanged: onShowParentElementsOnlyChanged,
+                ),
+                const Text('Show Parent Elements Only'),
+              ],
+            ),
           ),
         ],
       ),

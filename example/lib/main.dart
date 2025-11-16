@@ -13,9 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Unified Data Grid Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: const MyHomePage(),
     );
   }
@@ -32,9 +30,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Unified Data Grid Demo'),
-      ),
+      appBar: AppBar(title: const Text('Unified Data Grid Demo')),
       body: UnifiedDataGrid(
         onRowTap: (rowData) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -42,35 +38,35 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         },
         mode: DataGridMode.client,
-        rowHoverColor: Colors.blue.withValues(alpha:0.2),
+        rowHoverColor: Colors.blue.withValues(alpha: 0.2),
         clientData: const [
           {
             'id': '1',
             'name': 'John Doe',
             'age': 30,
             'parent': null,
-            'status': 'active'
+            'status': 'active',
           },
           {
             'id': '2',
             'name': 'Jane Doe',
             'age': 28,
             'parent': '1',
-            'status': 'inactive'
+            'status': 'inactive',
           },
           {
             'id': '3',
             'name': 'Peter Pan',
             'age': 12,
             'parent': null,
-            'status': 'pending'
+            'status': 'pending',
           },
           {
             'id': '4',
             'name': 'Wendy Darling',
             'age': 10,
             'parent': '3',
-            'status': 'active'
+            'status': 'active',
           },
         ],
         columnDefs: [
@@ -129,12 +125,24 @@ class _MyHomePageState extends State<MyHomePage> {
               }
               return AbsorbPointer(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 3.0,
+                    horizontal: 4.0,
+                  ),
                   child: Container(
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-                    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8.0)),
-                    child: Text(status, style: const TextStyle(color: Colors.white)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 2.0,
+                      horizontal: 8.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Text(
+                      status,
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               );

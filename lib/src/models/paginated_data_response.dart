@@ -30,16 +30,17 @@ class PaginatedDataResponse<T> {
   /// Whether the current page is empty.
   final bool empty;
 
-  PaginatedDataResponse(
-      {required this.content,
-      required this.totalElements,
-      required this.totalPages,
-      required this.last,
-      required this.first,
-      required this.size,
-      required this.number,
-      required this.numberOfElements,
-      required this.empty});
+  PaginatedDataResponse({
+    required this.content,
+    required this.totalElements,
+    required this.totalPages,
+    required this.last,
+    required this.first,
+    required this.size,
+    required this.number,
+    required this.numberOfElements,
+    required this.empty,
+  });
 
   factory PaginatedDataResponse.fromJson(
     Map<String, dynamic> json,
@@ -49,15 +50,16 @@ class PaginatedDataResponse<T> {
     final items = contentList.map((itemJson) => fromJsonT(itemJson)).toList();
 
     return PaginatedDataResponse<T>(
-        content: items,
-        totalElements: json['totalElements'] as int,
-        totalPages: json['totalPages'] as int,
-        last: json['last'] as bool,
-        first: json['first'] as bool,
-        size: json['size'] as int,
-        number: json['number'] as int,
-        numberOfElements: json['numberOfElements'] as int,
-        empty: json['empty'] as bool);
+      content: items,
+      totalElements: json['totalElements'] as int,
+      totalPages: json['totalPages'] as int,
+      last: json['last'] as bool,
+      first: json['first'] as bool,
+      size: json['size'] as int,
+      number: json['number'] as int,
+      numberOfElements: json['numberOfElements'] as int,
+      empty: json['empty'] as bool,
+    );
   }
 
   /// Creates an empty PaginatedDataResponse.
@@ -65,7 +67,10 @@ class PaginatedDataResponse<T> {
   /// Useful for initializing the data grid or handling error states where
   /// no data can be displayed.
   /// [page] is the 1-indexed page number from the grid options.
-  factory PaginatedDataResponse.empty({required int pageSize, required int page}) {
+  factory PaginatedDataResponse.empty({
+    required int pageSize,
+    required int page,
+  }) {
     return PaginatedDataResponse(
       content: [],
       totalElements: 0,

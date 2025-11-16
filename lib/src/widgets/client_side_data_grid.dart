@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'unified_data_grid.dart';
-export 'unified_data_grid.dart' show DataColumnDef, FilterType, ItemToMap, IsItemDeleted;
+export 'unified_data_grid.dart'
+    show DataColumnDef, FilterType, ItemToMap, IsItemDeleted;
 
 /// A reusable data grid widget that handles fetching, client-side filtering,
 /// sorting, and pagination for a list of data.
@@ -11,12 +12,14 @@ class ClientSideDataGrid<T> extends StatefulWidget {
   /// A function that fetches the entire list of data from a source.
   /// Either this or [data] must be provided.
   final Future<List<T>> Function()? fetchData;
+
   /// A static list of data to display. The grid will update if this list changes.
   /// Either this or [fetchData] must be provided.
   final List<T>? data;
   final List<DataColumnDef> columnDefs;
   final ItemToMap<T> toMap;
   final String rowIdKey;
+
   /// A function that determines if an item is considered "deleted".
   /// Required if [showDeletedToggle] is true.
   final IsItemDeleted<T>? isDeleted;
@@ -51,10 +54,15 @@ class ClientSideDataGrid<T> extends StatefulWidget {
     this.allowColumnResize = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
-  })  : assert((fetchData != null && data == null) || (fetchData == null && data != null),
-            'Either `fetchData` or `data` must be provided, but not both.'),
-        assert(!showDeletedToggle || isDeleted != null,
-            'The `isDeleted` function must be provided if `showDeletedToggle` is true.');
+  }) : assert(
+         (fetchData != null && data == null) ||
+             (fetchData == null && data != null),
+         'Either `fetchData` or `data` must be provided, but not both.',
+       ),
+       assert(
+         !showDeletedToggle || isDeleted != null,
+         'The `isDeleted` function must be provided if `showDeletedToggle` is true.',
+       );
 
   @override
   ClientSideDataGridState<T> createState() => ClientSideDataGridState<T>();

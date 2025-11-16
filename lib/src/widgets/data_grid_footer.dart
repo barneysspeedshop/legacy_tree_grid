@@ -93,7 +93,9 @@ class _DataGridFooterState extends State<DataGridFooter> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measureLeadingWidgets());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _measureLeadingWidgets(),
+    );
   }
 
   void _measureLeadingWidgets() {
@@ -128,7 +130,11 @@ class _DataGridFooterState extends State<DataGridFooter> {
     );
   }
 
-  Widget _buildOverflowMenu(List<_FooterAction> actions, double size, Color color) {
+  Widget _buildOverflowMenu(
+    List<_FooterAction> actions,
+    double size,
+    Color color,
+  ) {
     return PopupMenuButton<_FooterAction>(
       icon: FaIcon(FontAwesomeIcons.ellipsisVertical, size: size, color: color),
       tooltip: 'More Actions',
@@ -148,7 +154,9 @@ class _DataGridFooterState extends State<DataGridFooter> {
   @override
   Widget build(BuildContext context) {
     // Rerun measurement after build if the widgets might have changed.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measureLeadingWidgets());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _measureLeadingWidgets(),
+    );
 
     final theme = Theme.of(context);
     final scale = context.watch<ScaleNotifier?>()?.scale ?? 1.0;
@@ -160,32 +168,87 @@ class _DataGridFooterState extends State<DataGridFooter> {
     final textStyle = TextStyle(fontSize: 14.0 * scale);
 
     // --- Define all possible icon actions ---
-    final addAction = widget.onAdd == null ? null : _FooterAction(icon: FontAwesomeIcons.circlePlus, tooltip: 'Add New', menuText: 'Add New', onPressed: widget.onAdd);
+    final addAction = widget.onAdd == null
+        ? null
+        : _FooterAction(
+            icon: FontAwesomeIcons.circlePlus,
+            tooltip: 'Add New',
+            menuText: 'Add New',
+            onPressed: widget.onAdd,
+          );
     final deleteAction = widget.onDelete == null
         ? null
         : _FooterAction(
-        icon: widget.isUndeleteMode ? FontAwesomeIcons.trashCanArrowUp : FontAwesomeIcons.trashCan,
-        tooltip: widget.isUndeleteMode ? 'Undelete Selected' : 'Delete Selected',
-        menuText: widget.isUndeleteMode ? 'Undelete Selected' : 'Delete Selected',
-        onPressed: widget.onDelete,
-      );
-    final clearFiltersAction = widget.onClearFilters == null ? null : _FooterAction(icon: FontAwesomeIcons.filterCircleXmark, tooltip: 'Clear All Filters', menuText: 'Clear Filters', onPressed: widget.onClearFilters);
+            icon: widget.isUndeleteMode
+                ? FontAwesomeIcons.trashCanArrowUp
+                : FontAwesomeIcons.trashCan,
+            tooltip: widget.isUndeleteMode
+                ? 'Undelete Selected'
+                : 'Delete Selected',
+            menuText: widget.isUndeleteMode
+                ? 'Undelete Selected'
+                : 'Delete Selected',
+            onPressed: widget.onDelete,
+          );
+    final clearFiltersAction = widget.onClearFilters == null
+        ? null
+        : _FooterAction(
+            icon: FontAwesomeIcons.filterCircleXmark,
+            tooltip: 'Clear All Filters',
+            menuText: 'Clear Filters',
+            onPressed: widget.onClearFilters,
+          );
 
-    _FooterAction? firstPageAction, prevPageAction, nextPageAction, lastPageAction;
+    _FooterAction? firstPageAction,
+        prevPageAction,
+        nextPageAction,
+        lastPageAction;
     if (hasPagination) {
-      firstPageAction = _FooterAction(icon: FontAwesomeIcons.anglesLeft, tooltip: 'First Page', menuText: 'First Page', onPressed: widget.currentPage > 1 ? widget.onFirstPage : null);
-      prevPageAction = _FooterAction(icon: FontAwesomeIcons.angleLeft, tooltip: 'Previous Page', menuText: 'Previous Page', onPressed: widget.currentPage > 1 ? widget.onPreviousPage : null);
-      nextPageAction = _FooterAction(icon: FontAwesomeIcons.angleRight, tooltip: 'Next Page', menuText: 'Next Page', onPressed: widget.currentPage < widget.totalPages! ? widget.onNextPage : null);
-      lastPageAction = _FooterAction(icon: FontAwesomeIcons.anglesRight, tooltip: 'Last Page', menuText: 'Last Page', onPressed: widget.currentPage < widget.totalPages! ? widget.onLastPage : null);
+      firstPageAction = _FooterAction(
+        icon: FontAwesomeIcons.anglesLeft,
+        tooltip: 'First Page',
+        menuText: 'First Page',
+        onPressed: widget.currentPage > 1 ? widget.onFirstPage : null,
+      );
+      prevPageAction = _FooterAction(
+        icon: FontAwesomeIcons.angleLeft,
+        tooltip: 'Previous Page',
+        menuText: 'Previous Page',
+        onPressed: widget.currentPage > 1 ? widget.onPreviousPage : null,
+      );
+      nextPageAction = _FooterAction(
+        icon: FontAwesomeIcons.angleRight,
+        tooltip: 'Next Page',
+        menuText: 'Next Page',
+        onPressed: widget.currentPage < widget.totalPages!
+            ? widget.onNextPage
+            : null,
+      );
+      lastPageAction = _FooterAction(
+        icon: FontAwesomeIcons.anglesRight,
+        tooltip: 'Last Page',
+        menuText: 'Last Page',
+        onPressed: widget.currentPage < widget.totalPages!
+            ? widget.onLastPage
+            : null,
+      );
     }
-    final refreshAction = _FooterAction(icon: FontAwesomeIcons.rotate, tooltip: 'Refresh', menuText: 'Refresh Data', onPressed: widget.onRefresh);
+    final refreshAction = _FooterAction(
+      icon: FontAwesomeIcons.rotate,
+      tooltip: 'Refresh',
+      menuText: 'Refresh Data',
+      onPressed: widget.onRefresh,
+    );
 
     // This list defines the on-screen and overflow order of all icons
     final allIconActions = [
       addAction,
       deleteAction,
       clearFiltersAction,
-      firstPageAction, prevPageAction, nextPageAction, lastPageAction, // Pagination
+      firstPageAction,
+      prevPageAction,
+      nextPageAction,
+      lastPageAction, // Pagination
       refreshAction,
     ].whereType<_FooterAction>().toList();
 
@@ -193,12 +256,17 @@ class _DataGridFooterState extends State<DataGridFooter> {
     String recordsRange = '0 - 0';
     if (widget.totalRecords > 0) {
       int start = (widget.currentPage - 1) * widget.pageSize + 1;
-      int end = (widget.currentPage * widget.pageSize).clamp(0, widget.totalRecords);
+      int end = (widget.currentPage * widget.pageSize).clamp(
+        0,
+        widget.totalRecords,
+      );
       recordsRange = '$start - $end';
     }
-    final recordsText = 'Displaying records $recordsRange of ${widget.totalRecords}';
+    final recordsText =
+        'Displaying records $recordsRange of ${widget.totalRecords}';
 
-    final leadingWidgetsRow = (widget.leadingWidgets != null && widget.leadingWidgets!.isNotEmpty)
+    final leadingWidgetsRow =
+        (widget.leadingWidgets != null && widget.leadingWidgets!.isNotEmpty)
         ? Row(
             key: _leadingWidgetsKey,
             mainAxisSize: MainAxisSize.min,
@@ -225,11 +293,13 @@ class _DataGridFooterState extends State<DataGridFooter> {
           builder: (context, constraints) {
             // --- 1. Calculate width of all non-icon elements ---
             double fixedWidth = 0;
-            const double checkboxWidth = 48.0; // Standard width for a checkbox with padding
+            const double checkboxWidth =
+                48.0; // Standard width for a checkbox with padding
             const double textPadding = 8.0;
 
             Widget? showDeletedGroup;
-            if (widget.showDeleted != null && widget.onShowDeletedChanged != null) {
+            if (widget.showDeleted != null &&
+                widget.onShowDeletedChanged != null) {
               final text = 'Show Deleted Only';
               final textWidth = _getTextWidth(text, textStyle);
               fixedWidth += checkboxWidth + textWidth + 16; // 16 for SizedBox
@@ -241,7 +311,10 @@ class _DataGridFooterState extends State<DataGridFooter> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Checkbox(value: widget.showDeleted, onChanged: widget.onShowDeletedChanged),
+                    Checkbox(
+                      value: widget.showDeleted,
+                      onChanged: widget.onShowDeletedChanged,
+                    ),
                     Text(text, style: textStyle),
                   ],
                 ),
@@ -256,15 +329,17 @@ class _DataGridFooterState extends State<DataGridFooter> {
               fixedWidth += checkboxWidth + textWidth + 16; // 16 for SizedBox
               includeChildrenGroup = InkWell(
                 onTap: () {
-                  widget.onIncludeChildrenInFilterChanged
-                      ?.call(!widget.includeChildrenInFilter!);
+                  widget.onIncludeChildrenInFilterChanged?.call(
+                    !widget.includeChildrenInFilter!,
+                  );
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Checkbox(
-                        value: widget.includeChildrenInFilter,
-                        onChanged: widget.onIncludeChildrenInFilterChanged),
+                      value: widget.includeChildrenInFilter,
+                      onChanged: widget.onIncludeChildrenInFilterChanged,
+                    ),
                     Text(text, style: textStyle),
                   ],
                 ),
@@ -276,7 +351,8 @@ class _DataGridFooterState extends State<DataGridFooter> {
 
             Widget? pageTextWidget;
             if (hasPagination) {
-              final pageText = 'Page ${widget.currentPage} of ${widget.totalPages}';
+              final pageText =
+                  'Page ${widget.currentPage} of ${widget.totalPages}';
               pageTextWidget = Padding(
                 padding: const EdgeInsets.symmetric(horizontal: textPadding),
                 child: Text(pageText, style: textStyle),
@@ -287,7 +363,12 @@ class _DataGridFooterState extends State<DataGridFooter> {
 
             // --- 2. Determine how many icons can fit ---
             const double iconButtonWidth = 48.0; // Standard touch target size
-            double availableWidth = constraints.maxWidth - fixedWidth - _leadingWidgetsWidth - 16.0 - 8.0;
+            double availableWidth =
+                constraints.maxWidth -
+                fixedWidth -
+                _leadingWidgetsWidth -
+                16.0 -
+                8.0;
 
             int maxVisibleIcons = (availableWidth / iconButtonWidth).floor();
             List<_FooterAction> visibleIcons;
@@ -296,7 +377,10 @@ class _DataGridFooterState extends State<DataGridFooter> {
             final bool needsOverflow = allIconActions.length > maxVisibleIcons;
             if (needsOverflow) {
               // Account for the overflow button itself, which takes up one icon slot
-              final numVisible = (maxVisibleIcons - 1).clamp(0, allIconActions.length);
+              final numVisible = (maxVisibleIcons - 1).clamp(
+                0,
+                allIconActions.length,
+              );
               visibleIcons = allIconActions.sublist(0, numVisible);
               overflowIcons = allIconActions.sublist(numVisible);
             } else {
@@ -306,42 +390,59 @@ class _DataGridFooterState extends State<DataGridFooter> {
             final visibleIconsSet = Set.from(visibleIcons);
 
             // --- 3. Build the final Row with visible items ---
-            final bool anyLeftIconsVisible = [addAction, deleteAction, clearFiltersAction].whereType<_FooterAction>().any(visibleIconsSet.contains);
-            final bool anyPaginationIconsVisible = [firstPageAction, prevPageAction, nextPageAction, lastPageAction].whereType<_FooterAction>().any(visibleIconsSet.contains);
+            final bool anyLeftIconsVisible = [
+              addAction,
+              deleteAction,
+              clearFiltersAction,
+            ].whereType<_FooterAction>().any(visibleIconsSet.contains);
+            final bool anyPaginationIconsVisible = [
+              firstPageAction,
+              prevPageAction,
+              nextPageAction,
+              lastPageAction,
+            ].whereType<_FooterAction>().any(visibleIconsSet.contains);
 
             return Row(
               children: [
                 // --- Left Side Actions ---
                 if (addAction != null && visibleIconsSet.contains(addAction))
                   _buildIconButton(addAction, scaledIconSize, iconColor),
-                if (deleteAction != null && visibleIconsSet.contains(deleteAction))
+                if (deleteAction != null &&
+                    visibleIconsSet.contains(deleteAction))
                   _buildIconButton(deleteAction, scaledIconSize, iconColor),
-                if (clearFiltersAction != null && visibleIconsSet.contains(clearFiltersAction))
-                  _buildIconButton(clearFiltersAction, scaledIconSize, iconColor),
+                if (clearFiltersAction != null &&
+                    visibleIconsSet.contains(clearFiltersAction))
+                  _buildIconButton(
+                    clearFiltersAction,
+                    scaledIconSize,
+                    iconColor,
+                  ),
 
                 if (showDeletedGroup != null) ...[
                   if (anyLeftIconsVisible) const SizedBox(width: 16),
                   showDeletedGroup,
                 ],
-                if (includeChildrenGroup != null) ...[
-                  includeChildrenGroup,
-                ],
+                if (includeChildrenGroup != null) ...[includeChildrenGroup],
 
                 leadingWidgetsRow,
 
                 const Spacer(),
 
                 // --- Right Side Pagination ---
-                if (firstPageAction != null && visibleIconsSet.contains(firstPageAction))
+                if (firstPageAction != null &&
+                    visibleIconsSet.contains(firstPageAction))
                   _buildIconButton(firstPageAction, scaledIconSize, iconColor),
-                if (prevPageAction != null && visibleIconsSet.contains(prevPageAction))
+                if (prevPageAction != null &&
+                    visibleIconsSet.contains(prevPageAction))
                   _buildIconButton(prevPageAction, scaledIconSize, iconColor),
 
                 if (pageTextWidget != null) pageTextWidget,
 
-                if (nextPageAction != null && visibleIconsSet.contains(nextPageAction))
+                if (nextPageAction != null &&
+                    visibleIconsSet.contains(nextPageAction))
                   _buildIconButton(nextPageAction, scaledIconSize, iconColor),
-                if (lastPageAction != null && visibleIconsSet.contains(lastPageAction))
+                if (lastPageAction != null &&
+                    visibleIconsSet.contains(lastPageAction))
                   _buildIconButton(lastPageAction, scaledIconSize, iconColor),
 
                 if (anyPaginationIconsVisible) const SizedBox(width: 16),
@@ -350,7 +451,8 @@ class _DataGridFooterState extends State<DataGridFooter> {
                   _buildIconButton(refreshAction, scaledIconSize, iconColor),
                 const SizedBox(width: 8),
                 Text(recordsText, style: textStyle),
-                if (overflowIcons.isNotEmpty) _buildOverflowMenu(overflowIcons, scaledIconSize, iconColor),
+                if (overflowIcons.isNotEmpty)
+                  _buildOverflowMenu(overflowIcons, scaledIconSize, iconColor),
               ],
             );
           },

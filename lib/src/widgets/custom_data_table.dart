@@ -78,15 +78,25 @@ class CustomDataTable extends StatefulWidget {
   final String isEffectivelyVisibleKey;
   // --- Custom Rendering Properties ---
   final double scale;
-  final Widget Function(BuildContext context, List<DataColumnDef> columns)? headerRowBuilder;
-  final Widget Function(BuildContext context, List<DataColumnDef> columns, List<double> columnWidths)?
-      filterRowBuilder;
+  final Widget Function(BuildContext context, List<DataColumnDef> columns)?
+  headerRowBuilder;
   final Widget Function(
-      BuildContext context, Map<String, dynamic> rowData, List<DataColumnDef> columns)? rowBuilder;
+    BuildContext context,
+    List<DataColumnDef> columns,
+    List<double> columnWidths,
+  )?
+  filterRowBuilder;
+  final Widget Function(
+    BuildContext context,
+    Map<String, dynamic> rowData,
+    List<DataColumnDef> columns,
+  )?
+  rowBuilder;
 
   /// The border to display between rows and columns.
   /// Use `TableBorder.symmetric(inside: ...)` to add borders between cells.
   final TableBorder? border;
+
   /// Whether to show the filter row beneath the header.
   final bool allowFiltering;
 
@@ -144,26 +154,43 @@ class CustomDataTable extends StatefulWidget {
     this.onColumnWidthsChanged,
     this.scrollController,
     this.useAvailableWidthDistribution = false,
-  }) : assert(!showCheckboxColumn || (rowIdKey != null && selectedRowIds != null && onSelectionChanged != null),
-            'If showCheckboxColumn is true, rowIdKey, selectedRowIds, and onSelectionChanged must be provided.'),
-       assert(!isTree || (rowIdKey != null && onToggleExpansion != null),
-            'If isTree is true, rowIdKey and onToggleExpansion must be provided.');
+  }) : assert(
+         !showCheckboxColumn ||
+             (rowIdKey != null &&
+                 selectedRowIds != null &&
+                 onSelectionChanged != null),
+         'If showCheckboxColumn is true, rowIdKey, selectedRowIds, and onSelectionChanged must be provided.',
+       ),
+       assert(
+         !isTree || (rowIdKey != null && onToggleExpansion != null),
+         'If isTree is true, rowIdKey and onToggleExpansion must be provided.',
+       );
 
   /// A helper method to build a standard "status" cell with a colored background.
   ///
   /// This can be used within a `cellBuilder` for a consistent look and feel.
   /// It expects the `rawValue` to be a Map containing optional 'color' and
   /// 'textColor' hex strings.
-  static Widget buildStatusCell(BuildContext context, dynamic rawValue, String displayValue, double scale) {
+  static Widget buildStatusCell(
+    BuildContext context,
+    dynamic rawValue,
+    String displayValue,
+    double scale,
+  ) {
     final theme = Theme.of(context);
-    final defaultRowTextColor = theme.textTheme.bodyMedium?.color ?? (theme.brightness == Brightness.dark ? Colors.white : Colors.black);
+    final defaultRowTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        (theme.brightness == Brightness.dark ? Colors.white : Colors.black);
 
     Color? cellBackgroundColor;
     Color? cellTextColor = defaultRowTextColor;
 
     if (rawValue is Map<String, dynamic>) {
       if (rawValue.containsKey('color')) {
-        cellBackgroundColor = parseColorHex(rawValue['color'] as String?, Colors.transparent);
+        cellBackgroundColor = parseColorHex(
+          rawValue['color'] as String?,
+          Colors.transparent,
+        );
       }
       if (rawValue.containsKey('textColor')) {
         final textColorHex = rawValue['textColor'] as String?;
@@ -173,7 +200,11 @@ class CustomDataTable extends StatefulWidget {
       }
     }
 
-    final textWidget = Text(displayValue, overflow: TextOverflow.ellipsis, style: TextStyle(color: cellTextColor, fontSize: 12.0 * scale));
+    final textWidget = Text(
+      displayValue,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(color: cellTextColor, fontSize: 12.0 * scale),
+    );
 
     if (cellBackgroundColor != null) {
       // Wrap the colored Container in Padding. The Padding widget will be stretched
@@ -185,7 +216,10 @@ class CustomDataTable extends StatefulWidget {
           width: double.infinity, // Fill the width of the column.
           alignment: Alignment.center,
           padding: EdgeInsets.symmetric(vertical: 2.0 * scale),
-          decoration: BoxDecoration(color: cellBackgroundColor, borderRadius: BorderRadius.circular(2.0)),
+          decoration: BoxDecoration(
+            color: cellBackgroundColor,
+            borderRadius: BorderRadius.circular(2.0),
+          ),
           child: textWidget,
         ),
       );
@@ -228,7 +262,8 @@ class _CustomDataTableState extends State<CustomDataTable> {
   void didUpdateWidget(covariant CustomDataTable oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.columns.length != oldWidget.columns.length || widget.initialColumnWidths != oldWidget.initialColumnWidths) {
+    if (widget.columns.length != oldWidget.columns.length ||
+        widget.initialColumnWidths != oldWidget.initialColumnWidths) {
       setState(() {
         _widthsInitialized = false;
         if (widget.initialColumnWidths != null) {
@@ -239,24 +274,29 @@ class _CustomDataTableState extends State<CustomDataTable> {
     }
   }
 
-
   /// Calculates the initial widths for all columns based on their `flex` or
   /// `width` properties and the available screen space.
- void _initializeColumnWidths(BoxConstraints constraints) {
+  void _initializeColumnWidths(BoxConstraints constraints) {
     // Calculate total width of dividers between columns.
     final double dividerWidths = widget.columns.length > 1
-        ? widget.columns.sublist(0, widget.columns.length - 1).asMap().entries.map((entry) {
-            final int index = entry.key;
-            final bool isDraggable = widget.allowColumnResize &&
-                widget.columns[index].resizable &&
-                widget.columns[index + 1].resizable;
-            return isDraggable ? 10.0 : 1.0;
-          }).reduce((a, b) => a + b)
+        ? widget.columns
+              .sublist(0, widget.columns.length - 1)
+              .asMap()
+              .entries
+              .map((entry) {
+                final int index = entry.key;
+                final bool isDraggable =
+                    widget.allowColumnResize &&
+                    widget.columns[index].resizable &&
+                    widget.columns[index + 1].resizable;
+                return isDraggable ? 10.0 : 1.0;
+              })
+              .reduce((a, b) => a + b)
         : 0;
 
-    
     // Calculate the total width available for all columns.
-    final double availableWidth = constraints.maxWidth -
+    final double availableWidth =
+        constraints.maxWidth -
         (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) -
         dividerWidths;
 
@@ -275,7 +315,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
 
       if (sumOfInitialWidths < availableWidth) {
         final double extraSpace = availableWidth - sumOfInitialWidths;
-        final nameColumnIndex = widget.columns.indexWhere((col) => col.isNameColumn);
+        final nameColumnIndex = widget.columns.indexWhere(
+          (col) => col.isNameColumn,
+        );
 
         finalWidths = List.from(initialWidths);
         if (nameColumnIndex != -1) {
@@ -302,7 +344,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
       }
 
       final double availableWidthForFlex = availableWidth - totalFixedWidth;
-      final double widthPerFlex = (availableWidthForFlex > 0 && totalFlex > 0) ? availableWidthForFlex / totalFlex : 0;
+      final double widthPerFlex = (availableWidthForFlex > 0 && totalFlex > 0)
+          ? availableWidthForFlex / totalFlex
+          : 0;
 
       finalWidths = widget.columns.map((column) {
         if (column.width != null) {
@@ -341,15 +385,22 @@ class _CustomDataTableState extends State<CustomDataTable> {
       double newRightWidth = _columnWidths[columnIndex + 1] - delta;
 
       // Enforce minimum width for both columns
-      if (newLeftWidth < leftColumn.minWidth || newRightWidth < rightColumn.minWidth) {
+      if (newLeftWidth < leftColumn.minWidth ||
+          newRightWidth < rightColumn.minWidth) {
         // If one column is at its minimum, prevent further resizing in that direction.
         if (newLeftWidth < leftColumn.minWidth) {
           newLeftWidth = leftColumn.minWidth;
-          newRightWidth = _columnWidths[columnIndex] + _columnWidths[columnIndex + 1] - newLeftWidth;
+          newRightWidth =
+              _columnWidths[columnIndex] +
+              _columnWidths[columnIndex + 1] -
+              newLeftWidth;
         }
         if (newRightWidth < rightColumn.minWidth) {
           newRightWidth = rightColumn.minWidth;
-          newLeftWidth = _columnWidths[columnIndex] + _columnWidths[columnIndex + 1] - newRightWidth;
+          newLeftWidth =
+              _columnWidths[columnIndex] +
+              _columnWidths[columnIndex + 1] -
+              newRightWidth;
         }
       }
 
@@ -448,86 +499,91 @@ class _CustomDataTableState extends State<CustomDataTable> {
   @override
   Widget build(BuildContext context) {
     // The core table layout, which is a Column containing the header, filters, and rows.
-    return LayoutBuilder(builder: (context, constraints) {
-      // Initialize widths on the first layout pass if not already done.
-      if (!_widthsInitialized) {
-        // Post a frame callback to avoid calling setState during a build.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _initializeColumnWidths(constraints);
-          }
-        });
-        // Show a loader until widths are calculated to avoid a flash of unstyled content.
-        return const Center(child: CircularProgressIndicator());
-      }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Initialize widths on the first layout pass if not already done.
+        if (!_widthsInitialized) {
+          // Post a frame callback to avoid calling setState during a build.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _initializeColumnWidths(constraints);
+            }
+          });
+          // Show a loader until widths are calculated to avoid a flash of unstyled content.
+          return const Center(child: CircularProgressIndicator());
+        }
 
-      // The new layout using CustomScrollView and Slivers. This ensures that
-      // the header, filter row, and data rows all live within the same
-      // scrollable viewport. When a vertical scrollbar appears, it correctly
-      // reduces the width of all components, preventing misalignment.
-      final tableLayout = Scrollbar(
-        controller: _scrollController,
-        thumbVisibility: true, // Always show scrollbar on web for clarity
-        child: CustomScrollView(
+        // The new layout using CustomScrollView and Slivers. This ensures that
+        // the header, filter row, and data rows all live within the same
+        // scrollable viewport. When a vertical scrollbar appears, it correctly
+        // reduces the width of all components, preventing misalignment.
+        final tableLayout = Scrollbar(
           controller: _scrollController,
-          slivers: [
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverHeaderDelegate(
-                height: widget.headerHeight * widget.scale,
-                child: Material(
-                  // Use Material to provide a solid background color that
-                  // prevents rows from showing through during overscroll.
-                  color: Theme.of(context).canvasColor,
-                  child: _buildHeader(),
-                ),
-              ),
-            ),
-            if (widget.allowFiltering)
+          thumbVisibility: true, // Always show scrollbar on web for clarity
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _SliverHeaderDelegate(
-                  height: widget.rowHeight * widget.scale,
+                  height: widget.headerHeight * widget.scale,
                   child: Material(
+                    // Use Material to provide a solid background color that
+                    // prevents rows from showing through during overscroll.
                     color: Theme.of(context).canvasColor,
-                    child: _buildFilterRow(),
+                    child: _buildHeader(),
                   ),
                 ),
               ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildRow(context, widget.rows[index]),
-                childCount: widget.rows.length,
+              if (widget.allowFiltering)
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SliverHeaderDelegate(
+                    height: widget.rowHeight * widget.scale,
+                    child: Material(
+                      color: Theme.of(context).canvasColor,
+                      child: _buildFilterRow(),
+                    ),
+                  ),
+                ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildRow(context, widget.rows[index]),
+                  childCount: widget.rows.length,
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-
-      double dividerWidths = 0;
-      if (widget.columns.length > 1) {
-        for (int i = 0; i < widget.columns.length - 1; i++) {
-          final bool isDraggable = widget.allowColumnResize &&
-              widget.columns[i].resizable &&
-              widget.columns[i + 1].resizable;
-          dividerWidths += isDraggable ? 10.0 : 1.0;
-        }
-      }
-
-      final double totalWidth = _columnWidths.reduce((a, b) => a + b) +
-          (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) + dividerWidths;
-
-      // If the total calculated width of columns exceeds the available screen width,
-      // wrap the table in a horizontal scroll view.
-      if (totalWidth > constraints.maxWidth) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(width: totalWidth, child: tableLayout),
+            ],
+          ),
         );
-      }
-      // Otherwise, display as normal, filling the available width.
-      return tableLayout;
-    });
+
+        double dividerWidths = 0;
+        if (widget.columns.length > 1) {
+          for (int i = 0; i < widget.columns.length - 1; i++) {
+            final bool isDraggable =
+                widget.allowColumnResize &&
+                widget.columns[i].resizable &&
+                widget.columns[i + 1].resizable;
+            dividerWidths += isDraggable ? 10.0 : 1.0;
+          }
+        }
+
+        final double totalWidth =
+            _columnWidths.reduce((a, b) => a + b) +
+            (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) +
+            dividerWidths;
+
+        // If the total calculated width of columns exceeds the available screen width,
+        // wrap the table in a horizontal scroll view.
+        if (totalWidth > constraints.maxWidth) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(width: totalWidth, child: tableLayout),
+          );
+        }
+        // Otherwise, display as normal, filling the available width.
+        return tableLayout;
+      },
+    );
   }
 }
 
@@ -623,14 +679,20 @@ class _DataTableRow extends StatelessWidget {
     } else if (border == null) {
       // Default behavior
       containerBorder = Border(
-        bottom:
-            BorderSide(color: Theme.of(context).dividerColor.withValues(alpha:0.3)),
+        bottom: BorderSide(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+        ),
       );
     }
 
-    final hoverColor = rowHoverColor ?? const Color.fromRGBO(111, 172, 209, 0.15);
-    final selectedColor = rowHoverColor?.withValues(alpha:0.3) ?? const Color.fromRGBO(111, 172, 209, 0.3);
-    final selectedHoverColor = rowHoverColor?.withValues(alpha:0.45) ?? const Color.fromRGBO(111, 172, 209, 0.45);
+    final hoverColor =
+        rowHoverColor ?? const Color.fromRGBO(111, 172, 209, 0.15);
+    final selectedColor =
+        rowHoverColor?.withValues(alpha: 0.3) ??
+        const Color.fromRGBO(111, 172, 209, 0.3);
+    final selectedHoverColor =
+        rowHoverColor?.withValues(alpha: 0.45) ??
+        const Color.fromRGBO(111, 172, 209, 0.45);
 
     Color rowBackgroundColor;
     if (isSelected && isHovered) {
@@ -642,12 +704,11 @@ class _DataTableRow extends StatelessWidget {
     } else {
       rowBackgroundColor = Colors.transparent;
     }
-    
+
     // Find the first column that has an itemsBuilder to use for the context menu.
-    final DataColumnDef? actionsColumnDef = columns.cast<DataColumnDef?>().firstWhere(
-          (c) => c?.itemsBuilder != null,
-      orElse: () => null,
-    );
+    final DataColumnDef? actionsColumnDef = columns
+        .cast<DataColumnDef?>()
+        .firstWhere((c) => c?.itemsBuilder != null, orElse: () => null);
 
     void showRowContextMenu(BuildContext context, Offset tapPosition) {
       if (actionsColumnDef?.itemsBuilder == null) return;
@@ -655,12 +716,14 @@ class _DataTableRow extends StatelessWidget {
       final menuItems = actionsColumnDef!.itemsBuilder!(context, rowData);
       if (menuItems.isEmpty) return;
 
-      showContextMenu( // This was causing an error due to a missing import
+      showContextMenu(
+        // This was causing an error due to a missing import
         context: context,
         tapPosition: tapPosition,
         menuItems: menuItems,
       );
     }
+
     return MouseRegion(
       onEnter: (_) => onHover(true),
       onExit: (_) => onHover(false),
@@ -670,113 +733,148 @@ class _DataTableRow extends StatelessWidget {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           child: GestureDetector(
-            onSecondaryTapUp: (details) => showRowContextMenu(context, details.globalPosition),
-            onLongPressStart: (details) => showRowContextMenu(context, details.globalPosition),
+            onSecondaryTapUp: (details) =>
+                showRowContextMenu(context, details.globalPosition),
+            onLongPressStart: (details) =>
+                showRowContextMenu(context, details.globalPosition),
             child: isEffectivelyVisible
                 ? SizedBox(
                     height: rowHeight * scale,
                     child: Container(
                       decoration: BoxDecoration(border: containerBorder),
-                      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        if (showCheckboxColumn) _buildRowCheckbox(),
-                        ...List.generate(columns.length, (index) {
-                        final column = columns[index];
-                        String displayValue;
-                        if (column.formattedValue != null) {
-                          displayValue = column.formattedValue!(rowData);
-                        } else {
-                          displayValue =
-                              _extractValue(rowData, column.id)?.toString() ?? '';
-                        }
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (showCheckboxColumn) _buildRowCheckbox(),
+                          ...List.generate(columns.length, (index) {
+                            final column = columns[index];
+                            String displayValue;
+                            if (column.formattedValue != null) {
+                              displayValue = column.formattedValue!(rowData);
+                            } else {
+                              displayValue =
+                                  _extractValue(
+                                    rowData,
+                                    column.id,
+                                  )?.toString() ??
+                                  '';
+                            }
 
-                        Widget cellContent;
-                        if (column.cellBuilder != null) {
-                          // If a builder is provided, call it.
-                          cellContent = column.cellBuilder!(context, rowData) ?? Text(
-                            displayValue,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          );
-                        } else {
-                          // Default rendering for non-interactive cells.
-                          // It's wrapped in a GestureDetector to handle onRowTap for this specific cell.
-                          cellContent = GestureDetector(
-                            behavior: HitTestBehavior.opaque, // Ensure the whole cell area is tappable
-                            onTap: onRowTap != null ? () => onRowTap!(rowData) : null,
-                            child: Container(
-                              // Use a container to fill the cell and align the text
-                              width: double.infinity,
-                              alignment: _textAlignToAlignment(column.alignment),
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Text(displayValue, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
-                            ),
-                          );
-                        }
-
-                        // If the column is configured to only show on hover, wrap the content
-                        // in a Visibility widget that is controlled by the row's hover state.
-                        if (column.showOnRowHover) {
-                          cellContent = Visibility.maintain(
-                            visible: isHovered,
-                            child: cellContent,
-                          );
-                        }
-
-                        if (isTree && column.isNameColumn) {
-                          final int indentation =
-                              rowData[indentationLevelKey] as int? ?? 0;
-                          final bool hasChildren = rowData[hasChildrenKey] ==
-                              false; // Inverted logic from original
-                          final bool isExpanded =
-                              rowData[isExpandedKey] as bool? ?? false;
-                          final String rowId =
-                              _extractValue(rowData, rowIdKey).toString();
-
-                          cellContent = Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(width: indentation * 20.0 * scale),
-                              if (hasChildren)
-                                InkWell(
-                                  onTap: () => onToggleExpansion!(rowId),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: FaIcon(
-                                      isExpanded
-                                          ? FontAwesomeIcons.caretDown
-                                          : FontAwesomeIcons.caretRight,
-                                      size: 16 * scale,
-                                      color: Theme.of(context).iconTheme.color,
-                                    ),
+                            Widget cellContent;
+                            if (column.cellBuilder != null) {
+                              // If a builder is provided, call it.
+                              cellContent =
+                                  column.cellBuilder!(context, rowData) ??
+                                  Text(
+                                    displayValue,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  );
+                            } else {
+                              // Default rendering for non-interactive cells.
+                              // It's wrapped in a GestureDetector to handle onRowTap for this specific cell.
+                              cellContent = GestureDetector(
+                                behavior: HitTestBehavior
+                                    .opaque, // Ensure the whole cell area is tappable
+                                onTap: onRowTap != null
+                                    ? () => onRowTap!(rowData)
+                                    : null,
+                                child: Container(
+                                  // Use a container to fill the cell and align the text
+                                  width: double.infinity,
+                                  alignment: _textAlignToAlignment(
+                                    column.alignment,
                                   ),
-                                )
-                              else
-                                SizedBox(width: 24.0 * scale), // Keep alignment consistent
-                              SizedBox(width: 8.0 * scale),
-                              Expanded(child: cellContent),
-                            ],
-                          );
-                        }
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                  ),
+                                  child: Text(
+                                    displayValue,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              );
+                            }
 
-                        final cell = SizedBox(
-                          width: columnWidths[index],
-                          child: cellContent,
-                        );
+                            // If the column is configured to only show on hover, wrap the content
+                            // in a Visibility widget that is controlled by the row's hover state.
+                            if (column.showOnRowHover) {
+                              cellContent = Visibility.maintain(
+                                visible: isHovered,
+                                child: cellContent,
+                              );
+                            }
 
-                        if (index < columns.length - 1) {
-                          final bool isDraggable = allowColumnResize &&
-                              columns[index].resizable &&
-                              columns[index + 1].resizable;
+                            if (isTree && column.isNameColumn) {
+                              final int indentation =
+                                  rowData[indentationLevelKey] as int? ?? 0;
+                              final bool hasChildren =
+                                  rowData[hasChildrenKey] ==
+                                  false; // Inverted logic from original
+                              final bool isExpanded =
+                                  rowData[isExpandedKey] as bool? ?? false;
+                              final String rowId = _extractValue(
+                                rowData,
+                                rowIdKey,
+                              ).toString();
 
-                          final divider = VerticalDivider(
-                              width: isDraggable ? 10.0 : 1.0,
-                              thickness: 1,
-                              color: border?.verticalInside.color);
-                          return [cell, divider];
-                        }
-                        return [cell];
-                      }).expand((e) => e)
-                      ]),
+                              cellContent = Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(width: indentation * 20.0 * scale),
+                                  if (hasChildren)
+                                    InkWell(
+                                      onTap: () => onToggleExpansion!(rowId),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: FaIcon(
+                                          isExpanded
+                                              ? FontAwesomeIcons.caretDown
+                                              : FontAwesomeIcons.caretRight,
+                                          size: 16 * scale,
+                                          color: Theme.of(
+                                            context,
+                                          ).iconTheme.color,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    SizedBox(
+                                      width: 24.0 * scale,
+                                    ), // Keep alignment consistent
+                                  SizedBox(width: 8.0 * scale),
+                                  Expanded(child: cellContent),
+                                ],
+                              );
+                            }
+
+                            final cell = SizedBox(
+                              width: columnWidths[index],
+                              child: cellContent,
+                            );
+
+                            if (index < columns.length - 1) {
+                              final bool isDraggable =
+                                  allowColumnResize &&
+                                  columns[index].resizable &&
+                                  columns[index + 1].resizable;
+
+                              final divider = VerticalDivider(
+                                width: isDraggable ? 10.0 : 1.0,
+                                thickness: 1,
+                                color: border?.verticalInside.color,
+                              );
+                              return [cell, divider];
+                            }
+                            return [cell];
+                          }).expand((e) => e),
+                        ],
+                      ),
                     ),
                   )
                 : const SizedBox.shrink(),
@@ -820,13 +918,16 @@ class _DataTableHeader extends StatelessWidget {
   });
 
   Widget _buildSelectAllCheckbox() {
-    final displayedIds = rows.map((row) => _extractValue(row, rowIdKey!).toString()).toSet();
+    final displayedIds = rows
+        .map((row) => _extractValue(row, rowIdKey!).toString())
+        .toSet();
     final selectedDisplayedIds = selectedRowIds!.intersection(displayedIds);
 
     bool? isChecked;
     if (selectedDisplayedIds.isEmpty && displayedIds.isNotEmpty) {
       isChecked = false;
-    } else if (selectedDisplayedIds.length == displayedIds.length && displayedIds.isNotEmpty) {
+    } else if (selectedDisplayedIds.length == displayedIds.length &&
+        displayedIds.isNotEmpty) {
       isChecked = true;
     } else if (selectedDisplayedIds.isNotEmpty) {
       isChecked = null; // tristate
@@ -862,7 +963,9 @@ class _DataTableHeader extends StatelessWidget {
     if (horizontalBorder != null && horizontalBorder != BorderSide.none) {
       containerBorder = Border(bottom: horizontalBorder);
     } else if (border == null) {
-      containerBorder = Border(bottom: BorderSide(color: Theme.of(context).dividerColor));
+      containerBorder = Border(
+        bottom: BorderSide(color: Theme.of(context).dividerColor),
+      );
     }
 
     return Container(
@@ -875,13 +978,31 @@ class _DataTableHeader extends StatelessWidget {
             final column = columns[index];
             final isCurrentSortColumn = sortColumnId == column.id;
 
-            final headerText = Text(column.caption, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis);
-            final sortIndicator = isCurrentSortColumn ? FaIcon(sortAscending ? FontAwesomeIcons.arrowUp : FontAwesomeIcons.arrowDown, size: 14, color: Theme.of(context).colorScheme.primary) : const SizedBox.shrink();
+            final headerText = Text(
+              column.caption,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            );
+            final sortIndicator = isCurrentSortColumn
+                ? FaIcon(
+                    sortAscending
+                        ? FontAwesomeIcons.arrowUp
+                        : FontAwesomeIcons.arrowDown,
+                    size: 14,
+                    color: Theme.of(context).colorScheme.primary,
+                  )
+                : const SizedBox.shrink();
 
             final headerContent = InkWell(
-              onTap: column.sortable && onSort != null ? () => onSort!(column.id) : null,
+              onTap: column.sortable && onSort != null
+                  ? () => onSort!(column.id)
+                  : null,
               child: Row(
-                mainAxisAlignment: _textAlignToMainAxisAlignment(column.alignment),
+                mainAxisAlignment: _textAlignToMainAxisAlignment(
+                  column.alignment,
+                ),
                 children: [
                   Expanded(child: headerText),
                   if (isCurrentSortColumn) const SizedBox(width: 6),
@@ -890,13 +1011,33 @@ class _DataTableHeader extends StatelessWidget {
               ),
             );
 
-            final headerCell = SizedBox(width: columnWidths[index], child: headerContent);
+            final headerCell = SizedBox(
+              width: columnWidths[index],
+              child: headerContent,
+            );
 
             if (index < columns.length - 1) {
-              final bool isDraggable = allowColumnResize && column.resizable && columns[index + 1].resizable;
+              final bool isDraggable =
+                  allowColumnResize &&
+                  column.resizable &&
+                  columns[index + 1].resizable;
               final divider = isDraggable
-                  ? GestureDetector(onHorizontalDragUpdate: (details) => onColumnResize(details, index), child: MouseRegion(cursor: SystemMouseCursors.resizeLeftRight, child: VerticalDivider(width: 10, thickness: 1, color: border?.verticalInside.color)))
-                  : VerticalDivider(width: 1, color: border?.verticalInside.color);
+                  ? GestureDetector(
+                      onHorizontalDragUpdate: (details) =>
+                          onColumnResize(details, index),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.resizeLeftRight,
+                        child: VerticalDivider(
+                          width: 10,
+                          thickness: 1,
+                          color: border?.verticalInside.color,
+                        ),
+                      ),
+                    )
+                  : VerticalDivider(
+                      width: 1,
+                      color: border?.verticalInside.color,
+                    );
               return [headerCell, divider];
             }
             return [headerCell];
@@ -916,7 +1057,10 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return child;
   }
 

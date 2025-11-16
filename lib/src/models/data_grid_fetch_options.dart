@@ -1,6 +1,7 @@
 /// A data class that encapsulates the options for fetching data for a data grid.
 ///
 library;
+
 import 'dart:convert';
 
 /// This is used to pass pagination, sorting, and filtering information from the
@@ -21,12 +22,13 @@ class DataGridFetchOptions {
   /// A map of filters, where the key is the column ID and the value is the filter string.
   final Map<String, String> filters;
 
-  const DataGridFetchOptions(
-      {required this.page,
-      required this.pageSize,
-      this.sortBy,
-      this.sortAscending = true,
-      this.filters = const {}});
+  const DataGridFetchOptions({
+    required this.page,
+    required this.pageSize,
+    this.sortBy,
+    this.sortAscending = true,
+    this.filters = const {},
+  });
 
   DataGridFetchOptions copyWith({
     int? page,
