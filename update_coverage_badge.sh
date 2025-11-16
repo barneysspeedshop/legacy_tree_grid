@@ -41,6 +41,6 @@ readme_file="README.md"
 
 # This uses sed to find the line with the alt text "[Test Coverage]" and replace the whole line.
 echo "Updating README.md with new badge..."
-sed -i "s|^\[!\[Test Coverage\].*|$full_badge_markdown|" "$readme_file"
+sed -i "s|^\[!\[\].*|$full_badge_markdown|" "$readme_file"
 
 echo "Badge updated successfully!"

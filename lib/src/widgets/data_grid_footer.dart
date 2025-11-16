@@ -324,7 +324,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
             Widget? includeChildrenGroup;
             if (widget.includeChildrenInFilter != null &&
                 widget.onIncludeChildrenInFilterChanged != null) {
-              final text = 'Include Children';
+              final text = 'Filter Includes Children';
               final textWidth = _getTextWidth(text, textStyle);
               fixedWidth += checkboxWidth + textWidth + 16; // 16 for SizedBox
               includeChildrenGroup = InkWell(
