@@ -12,6 +12,9 @@ concurrency:
 
 jobs:
   build_and_deploy:
+    permissions:
+      contents: write # Needed to push to the gh-pages branch
+      pages: write # Needed to deploy to GitHub Pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
