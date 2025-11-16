@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/coverage-96%25-brightgreen)
+![](https://img.shields.io/badge/coverage-36%25-red)
 
 A powerful, flexible, and feature-rich data grid for Flutter, designed to handle client-side, server-side, and hierarchical (tree) data with ease.
 
