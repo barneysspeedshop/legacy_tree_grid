@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:legacy_tree_grid/unified_data_grid.dart';
+import 'unified_data_grid.dart';
 export 'unified_data_grid.dart' show DataColumnDef, FilterType, ItemToMap, IsItemDeleted;
 
 /// A reusable data grid widget that handles fetching, client-side filtering,
