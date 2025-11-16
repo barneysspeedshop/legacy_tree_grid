@@ -13,7 +13,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Unified Data Grid Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+      ),
+      themeMode: ThemeMode.system,
       home: const MyHomePage(),
     );
   }
@@ -38,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         },
         mode: DataGridMode.client,
-        rowHoverColor: Colors.blue.withValues(alpha: 0.2),
+        rowHoverColor: Theme.of(context).primaryColor.withOpacity(0.1),
         clientData: const [
           {
             'id': '1',
@@ -141,7 +149,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: Text(
                       status,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: getContrastingTextColor(color),
+                      ),
                     ),
                   ),
                 ),

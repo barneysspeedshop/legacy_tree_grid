@@ -1,4 +1,6 @@
 export 'src/widgets/custom_data_table.dart';
+export 'src/utils/color_utils.dart';
+export 'src/utils/scale_notifier.dart';
 export 'src/widgets/client_side_data_grid.dart';
 export 'src/widgets/unified_data_grid.dart';
 export 'src/widgets/server_side_data_grid.dart';
