@@ -36,11 +36,11 @@ if (( coverage_pct > 90 )); then color="brightgreen"; fi
 
 # 4. Update README.md
 badge_url="https://img.shields.io/badge/coverage-$coverage_pct%25-$color"
-full_badge_markdown="[![Test Coverage]($badge_url)](#)"
+full_badge_markdown="![]($badge_url)"
 readme_file="README.md"
 
-# This uses sed to find the line with the alt text "[Test Coverage]" and replace the whole line.
+# This uses sed to find the line with the coverage badge and replace it.
 echo "Updating README.md with new badge..."
-sed -i "s|^\[!\[\].*|$full_badge_markdown|" "$readme_file"
+sed -i "s|!\[\](https://img.shields.io/badge/coverage-.*)|$full_badge_markdown|" "$readme_file"
 
 echo "Badge updated successfully!"
