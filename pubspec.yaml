@@ -1,5 +1,5 @@
 name: legacy_tree_grid
-description: "A new Flutter package project."
+description: "Display, filter, sort, select, and edit tabular data in a tree grid."
 version: 0.0.1
 homepage:
 

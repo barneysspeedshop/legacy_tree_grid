@@ -1,3 +1,3 @@
 ## 0.0.1
 
-* TODO: Describe initial release.
+* **🎉**: Initial release. Hopefully this is the start of something good
