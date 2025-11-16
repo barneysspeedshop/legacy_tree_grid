@@ -501,18 +501,18 @@ class _CustomDataTableState extends State<CustomDataTable> {
     // The core table layout, which is a Column containing the header, filters, and rows.
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Initialize widths on the first layout pass if not already done.
-        if (!_widthsInitialized) {
+        // Recalculate widths if they haven't been initialized or if they
+        // are not being managed by user resizing (i.e., initialColumnWidths is null).
+        if (!_widthsInitialized || widget.initialColumnWidths == null) {
           // Post a frame callback to avoid calling setState during a build.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               _initializeColumnWidths(constraints);
             }
           });
-          // Show a loader until widths are calculated to avoid a flash of unstyled content.
-          return const Center(child: CircularProgressIndicator());
         }
 
+        if (!_widthsInitialized) return const SizedBox.shrink();
         // The new layout using CustomScrollView and Slivers. This ensures that
         // the header, filter row, and data rows all live within the same
         // scrollable viewport. When a vertical scrollbar appears, it correctly
