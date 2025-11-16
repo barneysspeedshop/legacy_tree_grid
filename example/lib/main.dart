@@ -46,7 +46,6 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         },
         mode: DataGridMode.client,
-        rowHoverColor: Theme.of(context).primaryColor.withValues(alpha:0.1),
         clientData: const [
           {
             'id': '1',

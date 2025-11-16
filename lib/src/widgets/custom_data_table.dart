@@ -691,14 +691,17 @@ class _DataTableRow extends StatelessWidget {
       );
     }
 
-    final hoverColor =
-        rowHoverColor ?? const Color.fromRGBO(111, 172, 209, 0.15);
-    final selectedColor =
-        rowHoverColor?.withValues(alpha: 0.3) ??
-        const Color.fromRGBO(111, 172, 209, 0.3);
-    final selectedHoverColor =
-        rowHoverColor?.withValues(alpha: 0.45) ??
-        const Color.fromRGBO(111, 172, 209, 0.45);
+    final theme = Theme.of(context);
+    final defaultHoverColor = theme.hoverColor;
+    final defaultSelectedColor = theme.highlightColor;
+
+    final hoverColor = rowHoverColor ?? defaultHoverColor;
+    final selectedColor = rowHoverColor != null
+        ? rowHoverColor!.withOpacity(0.3)
+        : defaultSelectedColor;
+    final selectedHoverColor = rowHoverColor != null
+        ? rowHoverColor!.withOpacity(0.45)
+        : defaultSelectedColor.withOpacity(0.45);
 
     Color rowBackgroundColor;
     if (isSelected && isHovered) {
