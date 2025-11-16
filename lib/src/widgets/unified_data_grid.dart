@@ -848,8 +848,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               if (value == null) return;
               setState(() {
                 _filterValues[column.id] = (value == 'all') ? '' : value;
-                if (widget.mode == DataGridMode.server)
+                if (widget.mode == DataGridMode.server) {
                   _onServerFilterChanged();
+                }
               });
             },
             decoration: const InputDecoration(
@@ -988,8 +989,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         totalPages = totalRecords > 0
             ? (totalRecords / widget.pageSize).ceil()
             : 1;
-        if (_currentPage > totalPages)
+        if (_currentPage > totalPages) {
           _currentPage = totalPages > 0 ? totalPages : 1;
+        }
         final paginatedData = processedData
             .skip((_currentPage - 1) * widget.pageSize)
             .take(widget.pageSize)

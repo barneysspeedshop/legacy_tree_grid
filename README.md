@@ -1,39 +1,120 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+A powerful, flexible, and feature-rich data grid for Flutter, designed to handle client-side, server-side, and hierarchical (tree) data with ease.
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+The `legacy_tree_grid` provides a set of high-level widgets that simplify the display of tabular data, whether it's a small list managed on the client or a large, paginated dataset from a server.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+## Key Features
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+*   **Multiple Data Modes:**
+    *   `ClientSideDataGrid`: Manages data entirely in-memory. Perfect for smaller, static datasets with built-in filtering, sorting, and pagination.
+    *   `ServerSideDataGrid`: Efficiently handles large datasets by delegating pagination, sorting, and filtering to a backend API.
+*   **Tree Grid Support:** Display hierarchical data with expandable/collapsible nodes, parent/child relationships, and indentation.
+*   **Rich Column Configuration:** Use `DataColumnDef` to precisely control column width (`flex` or `width`), alignment, sorting behavior, resizing, and custom cell rendering.
+*   **Interactive:** Built-in support for:
+    *   Single-column sorting (ascending/descending).
+    *   Per-column filtering with various types (`string`, `numeric`, `date`, `list`, `boolean`).
+    *   Row selection via a checkbox column.
+    *   Row tap events.
+*   **Pagination:** A responsive footer with automatic pagination controls for both client and server modes.
+*   **Customization:** Highly customizable rendering using builder functions (`cellBuilder`) for complete control over cell content.
+*   **Responsive Footer:** Action buttons (add, delete, refresh) automatically collapse into an overflow menu on smaller screens.
+*   **And more...** Column resizing, a "show deleted" toggle, UI scaling (zoom), and factory constructors for common column types like an "actions" menu.
 
-## Features
+## Getting Started
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+Add the `legacy_tree_grid` package to your `pubspec.yaml` file.
 
-## Getting started
+```yaml
+dependencies:
+  legacy_tree_grid: ^0.0.1 # Replace with the latest version
+```
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Then, run `flutter pub get` and import the package in your Dart file:
+
+```dart
+import 'package:legacy_tree_grid/legacy_tree_grid.dart';
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+Here is a complete example of a `ClientSideDataGrid` configured as a tree grid.
 
 ```dart
-const like = 'sample';
+import 'package:flutter/material.dart';
+import 'package:legacy_tree_grid/legacy_tree_grid.dart';
+
+// 1. Define your data model
+class Person {
+  final String id;
+  final String? parentId;
+  final String name;
+  final int age;
+
+  Person({required this.id, this.parentId, required this.name, required this.age});
+}
+
+class MyTreeGridPage extends StatelessWidget {
+  const MyTreeGridPage({super.key});
+
+  // 2. Create your data source
+  final List<Person> data = const [
+    Person(id: '1', name: 'John Doe', age: 30),
+    Person(id: '2', parentId: '1', name: 'Jane Doe', age: 28),
+    Person(id: '3', parentId: '1', name: 'Jr. Doe', age: 5),
+    Person(id: '4', name: 'Peter Pan', age: 12),
+    Person(id: '5', parentId: '4', name: 'Wendy Darling', age: 10),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Tree Grid Example')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        // 3. Use the ClientSideDataGrid widget
+        child: ClientSideDataGrid<Person>(
+          // Provide the data
+          data: data,
+          // Define how to map your object to a Map
+          toMap: (person) => {
+            'id': person.id,
+            'parentId': person.parentId,
+            'name': person.name,
+            'age': person.age,
+          },
+          // Specify keys for tree structure and row identity
+          rowIdKey: 'id',
+          parentIdKey: 'parentId',
+          // Enable tree mode
+          isTree: true,
+          // Define the columns
+          columnDefs: [
+            DataColumnDef(
+              id: 'name',
+              caption: 'Name',
+              width: 250,
+              // Mark this as the column that shows the tree hierarchy
+              isNameColumn: true,
+            ),
+            DataColumnDef(
+              id: 'age',
+              caption: 'Age',
+              width: 100,
+              alignment: TextAlign.right,
+              filterType: FilterType.numeric,
+            ),
+          ],
+          // Enable features
+          allowFiltering: true,
+          showCheckboxColumn: true,
+        ),
+      ),
+    );
+  }
+}
 ```
 
-## Additional information
+## Additional Information
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+For more detailed examples, including `ServerSideDataGrid` usage, please check the `/example` folder in the repository.
+
+If you encounter any issues or have feature requests, please file them on the issue tracker. We appreciate your feedback and contributions!
