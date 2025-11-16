@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:legacy_tree_grid/color_utils.dart';
-import 'package:legacy_tree_grid/data_column_def.dart';
+import 'package:legacy_tree_grid/src/utils/color_utils.dart';
+import 'package:legacy_tree_grid/src/models/data_column_def.dart';
 import 'package:legacy_context_menu/legacy_context_menu.dart';
-export 'package:legacy_tree_grid/data_column_def.dart';
+export 'package:legacy_tree_grid/src/models/data_column_def.dart';
 
 /// Extracts a value from a map, supporting nested paths.
 dynamic _extractValue(Map<String, dynamic> data, String path) {

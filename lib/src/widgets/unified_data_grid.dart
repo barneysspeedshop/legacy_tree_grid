@@ -3,17 +3,17 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
-import 'package:legacy_tree_grid/data_grid_fetch_options.dart';
-export 'package:legacy_tree_grid/data_grid_fetch_options.dart';
-import 'package:legacy_tree_grid/paginated_data_response.dart';
-export 'package:legacy_tree_grid/paginated_data_response.dart';
-import 'package:legacy_tree_grid/custom_data_table.dart';
-export 'package:legacy_tree_grid/custom_data_table.dart';
-import 'package:legacy_tree_grid/data_grid_footer.dart';
-export 'package:legacy_tree_grid/data_grid_footer.dart';
+import 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
+export 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
+import 'package:legacy_tree_grid/src/models/paginated_data_response.dart';
+export 'package:legacy_tree_grid/src/models/paginated_data_response.dart';
+import 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
+export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
+import 'package:legacy_tree_grid/src/widgets/data_grid_footer.dart';
+export 'package:legacy_tree_grid/src/widgets/data_grid_footer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-export 'package:legacy_tree_grid/custom_data_table.dart' show DataColumnDef, FilterType;
+export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart' show DataColumnDef, FilterType;
 
 /// A function that converts a model of type T to a map for the data table.
 typedef ItemToMap<T> = Map<String, dynamic> Function(T item);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:legacy_tree_grid/scale_notifier.dart';
+import 'package:legacy_tree_grid/src/utils/scale_notifier.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
