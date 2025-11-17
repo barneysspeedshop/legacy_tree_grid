@@ -14,6 +14,7 @@ dependencies:
   legacy_context_menu: ^2.1.2
   legacy_tree_grid:
     path: ../
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

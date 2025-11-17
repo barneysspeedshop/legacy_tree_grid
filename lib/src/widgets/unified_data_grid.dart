@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
+export 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
 export 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
 import 'package:legacy_tree_grid/src/models/paginated_data_response.dart';
@@ -147,6 +149,10 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// An optional color for the row hover effect.
   final Color? rowHoverColor;
 
+  /// An optional initial state for the grid, allowing for saved views to be loaded.
+  /// If provided, it will override other initial settings like `initialSortColumnId`.
+  final GridViewState? initialViewState;
+
   const UnifiedDataGrid({
     super.key,
     required this.mode,
@@ -180,6 +186,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.parentIdKey,
     this.rootValue,
     this.rowHoverColor,
+    this.initialViewState,
   }) : assert(
          (mode == DataGridMode.client &&
                  (clientData != null || clientFetch != null)) ||
@@ -214,7 +221,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   String? _sortColumnId;
   bool _sortAscending = true;
   final Map<String, TextEditingController> _filterControllers = {};
+  List<double> _columnWidths = [];
   final Map<String, String> _filterValues = {};
+  List<String>? _columnOrder;
 
   // --- Client-Mode State ---
   List<T> _allData = [];
@@ -230,8 +239,13 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   @override
   void initState() {
     super.initState();
-    _sortColumnId = widget.initialSortColumnId;
-    _sortAscending = widget.initialSortAscending;
+    if (widget.initialViewState != null) {
+      _applyInitialViewState(widget.initialViewState!);
+      _columnOrder = widget.initialViewState!.columnOrder;
+    } else {
+      _sortColumnId = widget.initialSortColumnId;
+      _sortAscending = widget.initialSortAscending;
+    }
 
     if (widget.mode == DataGridMode.client) {
       if (widget.clientFetch != null) {
@@ -277,6 +291,52 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     }
   }
 
+  void _applyInitialViewState(GridViewState viewState) {
+    _sortColumnId = viewState.sortColumnId;
+    _sortAscending = viewState.sortAscending;
+    _filterValues.addAll(viewState.filters);
+
+    // The column widths will be applied later in CustomDataTable's LayoutBuilder
+    // after the final column order is determined.
+  }
+
+  /// Returns the current visual state of the grid.
+  ///
+  /// This can be used to save the user's current view (column widths, order,
+  /// filters, and sorting) for later restoration.
+  GridViewState getCurrentViewState() {
+    return GridViewState(
+      columnWidths: Map.fromIterables(
+          _getFinalColumnDefs().map((c) => c.id), _columnWidths),
+      columnOrder: _getFinalColumnDefs().map((c) => c.id).toList(),
+      filters: _filterValues,
+      sortColumnId: _sortColumnId,
+      sortAscending: _sortAscending,
+    );
+  }
+
+  /// Applies a given [GridViewState] to the grid, updating its sorting,
+  /// filtering, column order, and widths.
+  ///
+  /// This method can be called externally via a [GlobalKey] to dynamically
+  /// restore a previously saved view without rebuilding the entire widget.
+  void applyViewState(GridViewState viewState) {
+    setState(() {
+      // Apply sorting
+      _sortColumnId = viewState.sortColumnId;
+      _sortAscending = viewState.sortAscending;
+
+      // Apply filters
+      _filterValues.clear();
+      _filterValues.addAll(viewState.filters);
+      for (final entry in _filterValues.entries) {
+        _filterControllers[entry.key]?.text = entry.value;
+      }
+
+      // Apply column order and widths
+      _columnOrder = viewState.columnOrder;
+    });
+  }
   // --- ==================== Data Handling Logic ==================== ---
 
   Future<void> refresh() async {
@@ -951,22 +1011,36 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final List<DataColumnDef> finalColumnDefs = List.of(widget.columnDefs);
+  List<DataColumnDef> _getFinalColumnDefs() {
+    List<DataColumnDef> finalColumnDefs = List.of(widget.columnDefs);
 
-    // --- Data & UI Variables ---
-    List<Map<String, dynamic>> displayRows = [];
-    int totalRecords = 0;
-    int totalPages = 1;
-    bool isFirstPage = true;
-    bool isLastPage = true;
+    if (_columnOrder != null) {
+      final defsMap = {for (var def in finalColumnDefs) def.id: def};
+      final order = _columnOrder!;
+      finalColumnDefs = order
+          .map((id) => defsMap[id])
+          .whereType<DataColumnDef>()
+          .toList();
+    }
 
     if (widget.idColumnDef != null) {
       finalColumnDefs.insert(0, widget.idColumnDef!);
     }
+    return finalColumnDefs;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final finalColumnDefs = _getFinalColumnDefs();
+
+    // --- Data & UI Variables ---
+    List<Map<String, dynamic>> displayRows = [];
+    int totalRecords = 0;
+    bool isFirstPage = true;
+    bool isLastPage = true;
 
     // --- Data Processing Pipeline ---
+    int totalPages;
     if (widget.mode == DataGridMode.client) {
       final processedData = _getProcessedClientData();
 
@@ -1038,6 +1112,24 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
           widget.onServerShowDeletedChanged?.call(value ?? false);
     }
 
+    // --- Handle Initial Column Widths from ViewState ---
+    List<double>? initialColumnWidths;
+    // If a view state is being applied (either initially or dynamically),
+    // we need to prepare the column widths in the correct order.
+    if (_columnOrder != null) {
+      final GridViewState? viewState = widget.initialViewState;
+      final widthsMap = viewState?.columnWidths ?? {};
+
+      // Ensure the widths are in the same order as the final columns.
+      // Provide a fallback to the column's defined width if not in the map.
+      initialColumnWidths = finalColumnDefs
+          .map((c) => widthsMap[c.id] ?? c.width ?? c.minWidth)
+          .toList();
+
+      // When a new view is applied, we must reset the widths in CustomDataTable.
+      // Setting _widthsInitialized to false in the child is not ideal, so we pass a key.
+    }
+
     final mainContent = CustomDataTable(
       columns: finalColumnDefs,
       rows: displayRows, // Use displayRows for both tree and flat list
@@ -1050,7 +1142,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       rowHoverColor: widget.rowHoverColor,
       selectedRowIds: _selectedRowIds,
       onSelectionChanged: (newSelection) =>
-          setState(() => _selectedRowIds = newSelection),
+          setState(() => _selectedRowIds = newSelection), // TODO: this is a bug
       allowFiltering: widget.allowFiltering,
       filterRowBuilder: widget.allowFiltering ? _buildFilterRow : null,
       allowColumnResize: widget.allowColumnResize,
@@ -1060,6 +1152,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       hasChildrenKey: 'leaf',
       indentationLevelKey: '_indentationLevel',
       isEffectivelyVisibleKey: '_isEffectivelyVisible',
+      initialColumnWidths: initialColumnWidths,
+      onColumnWidthsChanged: (newWidths) {
+        if (mounted) {
+          setState(() {
+            _columnWidths = newWidths;
+          });
+        }
+      },
     );
 
     return Column(

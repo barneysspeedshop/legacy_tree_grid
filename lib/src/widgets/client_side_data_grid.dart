@@ -81,6 +81,11 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
     await _gridKey.currentState?.refresh();
   }
 
+  /// Public method to get the current grid view state.
+  GridViewState? getCurrentViewState() {
+    return _gridKey.currentState?.getCurrentViewState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return UnifiedDataGrid<T>(

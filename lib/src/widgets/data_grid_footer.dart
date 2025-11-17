@@ -3,6 +3,19 @@ import 'package:legacy_tree_grid/src/utils/scale_notifier.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
+/// Defines the types of actions that can be displayed in the footer.
+/// Used to configure the order of the action buttons.
+enum FooterActionType {
+  add,
+  delete,
+  clearFilters,
+  firstPage,
+  previousPage,
+  nextPage,
+  lastPage,
+  refresh,
+}
+
 /// Helper class to define the properties of a footer action.
 class _FooterAction {
   final IconData icon;
@@ -59,6 +72,9 @@ class DataGridFooter extends StatefulWidget {
   final List<WidgetBuilder>? leadingWidgets;
   final bool? includeChildrenInFilter;
   final ValueChanged<bool?>? onIncludeChildrenInFilterChanged;
+  /// An optional list to define the order of action buttons in the footer.
+  /// If not provided, a default order will be used.
+  final List<FooterActionType>? actionOrder;
 
   const DataGridFooter({
     super.key,
@@ -80,6 +96,7 @@ class DataGridFooter extends StatefulWidget {
     this.leadingWidgets,
     this.includeChildrenInFilter,
     this.onIncludeChildrenInFilterChanged,
+    this.actionOrder,
   });
 
   @override
@@ -240,17 +257,37 @@ class _DataGridFooterState extends State<DataGridFooter> {
       onPressed: widget.onRefresh,
     );
 
+    // --- Build the list of actions based on the configured order ---
+    final Map<FooterActionType, _FooterAction> actionsMap = {
+      if (addAction != null) FooterActionType.add: addAction,
+      if (deleteAction != null) FooterActionType.delete: deleteAction,
+      if (clearFiltersAction != null)
+        FooterActionType.clearFilters: clearFiltersAction,
+      if (firstPageAction != null) FooterActionType.firstPage: firstPageAction,
+      if (prevPageAction != null) FooterActionType.previousPage: prevPageAction,
+      if (nextPageAction != null) FooterActionType.nextPage: nextPageAction,
+      if (lastPageAction != null) FooterActionType.lastPage: lastPageAction,
+      FooterActionType.refresh: refreshAction,
+    };
+
+    // Use the provided order, or a default order if null.
+    final List<FooterActionType> order = widget.actionOrder ??
+        const [
+          FooterActionType.add,
+          FooterActionType.delete,
+          FooterActionType.clearFilters,
+          FooterActionType.firstPage,
+          FooterActionType.previousPage,
+          FooterActionType.nextPage,
+          FooterActionType.lastPage,
+          FooterActionType.refresh,
+        ];
+
     // This list defines the on-screen and overflow order of all icons
-    final allIconActions = [
-      addAction,
-      deleteAction,
-      clearFiltersAction,
-      firstPageAction,
-      prevPageAction,
-      nextPageAction,
-      lastPageAction, // Pagination
-      refreshAction,
-    ].whereType<_FooterAction>().toList();
+    final allIconActions = order
+        .map((type) => actionsMap[type])
+        .whereType<_FooterAction>()
+        .toList();
 
     // --- Build Records Display Text ---
     String recordsRange = '0 - 0';

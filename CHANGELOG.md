@@ -1,3 +1,8 @@
+##
+
+* **FEATURE**: Add the ability to save views and restore them 
+* **FEATURE**: Add the ability to adjust the sequence of footer items
+
 ## 0.1.0
 
 * **FEATURE**: Add support for dark mode

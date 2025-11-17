@@ -368,6 +368,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
     setState(() {
       _columnWidths = finalWidths;
       _widthsInitialized = true;
+      widget.onColumnWidthsChanged?.call(finalWidths);
     });
   }
 
@@ -697,11 +698,11 @@ class _DataTableRow extends StatelessWidget {
 
     final hoverColor = rowHoverColor ?? defaultHoverColor;
     final selectedColor = rowHoverColor != null
-        ? rowHoverColor!.withOpacity(0.3)
+        ? rowHoverColor!.withValues(alpha:0.3)
         : defaultSelectedColor;
     final selectedHoverColor = rowHoverColor != null
-        ? rowHoverColor!.withOpacity(0.45)
-        : defaultSelectedColor.withOpacity(0.45);
+        ? rowHoverColor!.withValues(alpha:0.45)
+        : defaultSelectedColor.withValues(alpha:0.45);
 
     Color rowBackgroundColor;
     if (isSelected && isHovered) {
