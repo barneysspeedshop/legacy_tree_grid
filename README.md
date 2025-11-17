@@ -13,7 +13,7 @@ The name `legacy_tree_grid` is a tribute to the package's author, Patrick Legacy
 
 ---
 
-![example](https://raw.githubusercontent.com/barneysspeedshop/legacy_tree_grid/refs/heads/main/assets/screenshot.png)
+[![example](https://raw.githubusercontent.com/barneysspeedshop/legacy_tree_grid/refs/heads/main/assets/screenshot.png)](https://barneysspeedshop.github.io/legacy_tree_grid/)
 
 ## Key Features
 
