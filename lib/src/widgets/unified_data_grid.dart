@@ -1204,12 +1204,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             onPreviousPage: !isFirstPage
                 ? () => _onPageChanged(_currentPage - 1)
                 : null,
-            onNextPage:
-                !isLastPage ? () => _onPageChanged(_currentPage + 1) : null,
+            onNextPage: !isLastPage
+                ? () => _onPageChanged(_currentPage + 1)
+                : null,
             onLastPage: !isLastPage ? () => _onPageChanged(totalPages) : null,
             onAdd: widget.onAdd,
-            onDelete:
-                widget.onDelete != null && hasSelection ? _handleDelete : null,
+            onDelete: widget.onDelete != null && hasSelection
+                ? _handleDelete
+                : null,
             onClearFilters: _clearFilters,
             showDeleted: showDeletedValue,
             onShowDeletedChanged: showDeletedChangedCallback,
@@ -1217,14 +1219,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             leadingWidgets: widget.footerLeadingWidgets,
             includeChildrenInFilter:
                 widget.isTree && widget.allowIncludeChildrenInFilterToggle
-                    ? _includeChildrenInFilter
-                    : null,
+                ? _includeChildrenInFilter
+                : null,
             onIncludeChildrenInFilterChanged:
                 widget.isTree && widget.allowIncludeChildrenInFilterToggle
-                    ? (value) => setState(() {
-                          _includeChildrenInFilter = value ?? false;
-                        })
-                    : null,
+                ? (value) => setState(() {
+                    _includeChildrenInFilter = value ?? false;
+                  })
+                : null,
           ),
       ],
     );
