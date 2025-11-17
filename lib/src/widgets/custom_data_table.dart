@@ -698,11 +698,11 @@ class _DataTableRow extends StatelessWidget {
 
     final hoverColor = rowHoverColor ?? defaultHoverColor;
     final selectedColor = rowHoverColor != null
-        ? rowHoverColor!.withValues(alpha:0.3)
+        ? rowHoverColor!.withValues(alpha: 0.3)
         : defaultSelectedColor;
     final selectedHoverColor = rowHoverColor != null
-        ? rowHoverColor!.withValues(alpha:0.45)
-        : defaultSelectedColor.withValues(alpha:0.45);
+        ? rowHoverColor!.withValues(alpha: 0.45)
+        : defaultSelectedColor.withValues(alpha: 0.45);
 
     Color rowBackgroundColor;
     if (isSelected && isHovered) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:legacy_context_menu/legacy_context_menu.dart' show ContextMenuItem;
+import 'package:legacy_context_menu/legacy_context_menu.dart'
+    show ContextMenuItem;
 import 'package:legacy_tree_grid/legacy_tree_grid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -99,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
   }
+
   Future<void> _clearSavedView() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('my_grid_view');
@@ -110,7 +112,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Saved view cleared. Restart the app to see the default view.'),
+        content: Text(
+          'Saved view cleared. Restart the app to see the default view.',
+        ),
         backgroundColor: Colors.orange,
       ),
     );
@@ -250,25 +254,25 @@ class _MyHomePageState extends State<MyHomePage> {
               // --- Example of adding custom widgets to the footer ---
               footerLeadingWidgets: [
                 (context) => Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: ElevatedButton.icon(
-                        onPressed: _saveView,
-                        icon: const Icon(Icons.save, size: 16),
-                        label: const Text('Save View'),
-                      ),
-                    ),
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: ElevatedButton.icon(
+                    onPressed: _saveView,
+                    icon: const Icon(Icons.save, size: 16),
+                    label: const Text('Save View'),
+                  ),
+                ),
                 (context) => Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: ElevatedButton.icon(
-                        onPressed: _restoreView,
-                        icon: const Icon(Icons.restore, size: 16),
-                        label: const Text('Restore View'),
-                      ),
-                    ),
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: ElevatedButton.icon(
+                    onPressed: _restoreView,
+                    icon: const Icon(Icons.restore, size: 16),
+                    label: const Text('Restore View'),
+                  ),
+                ),
                 (context) => TextButton(
-                      onPressed: _clearSavedView,
-                      child: const Text('Clear Saved View'),
-                    ),
+                  onPressed: _clearSavedView,
+                  child: const Text('Clear Saved View'),
+                ),
               ],
               rowIdKey: 'id',
               isTree: true,

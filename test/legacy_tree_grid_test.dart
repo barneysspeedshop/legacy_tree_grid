@@ -18,8 +18,9 @@ void main() {
     TestPerson(id: '2', name: 'Jane Smith', age: 25),
   ];
 
-  testWidgets('ClientSideDataGrid renders data and headers correctly',
-      (WidgetTester tester) async {
+  testWidgets('ClientSideDataGrid renders data and headers correctly', (
+    WidgetTester tester,
+  ) async {
     // Build the ClientSideDataGrid widget.
     await tester.pumpWidget(
       MaterialApp(

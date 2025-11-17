@@ -307,7 +307,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   GridViewState getCurrentViewState() {
     return GridViewState(
       columnWidths: Map.fromIterables(
-          _getFinalColumnDefs().map((c) => c.id), _columnWidths),
+        _getFinalColumnDefs().map((c) => c.id),
+        _columnWidths,
+      ),
       columnOrder: _getFinalColumnDefs().map((c) => c.id).toList(),
       filters: _filterValues,
       sortColumnId: _sortColumnId,

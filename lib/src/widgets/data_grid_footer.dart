@@ -72,6 +72,7 @@ class DataGridFooter extends StatefulWidget {
   final List<WidgetBuilder>? leadingWidgets;
   final bool? includeChildrenInFilter;
   final ValueChanged<bool?>? onIncludeChildrenInFilterChanged;
+
   /// An optional list to define the order of action buttons in the footer.
   /// If not provided, a default order will be used.
   final List<FooterActionType>? actionOrder;
@@ -271,7 +272,8 @@ class _DataGridFooterState extends State<DataGridFooter> {
     };
 
     // Use the provided order, or a default order if null.
-    final List<FooterActionType> order = widget.actionOrder ??
+    final List<FooterActionType> order =
+        widget.actionOrder ??
         const [
           FooterActionType.add,
           FooterActionType.delete,
