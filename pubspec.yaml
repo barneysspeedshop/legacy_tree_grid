@@ -1,6 +1,6 @@
 name: legacy_tree_grid
 description: "Display, filter, sort, select, and edit tabular data in a tree grid."
-version: 0.2.1
+version: 0.3.0
 repository: https://github.com/barneysspeedshop/legacy_tree_grid
 screenshots: https://raw.githubusercontent.com/barneysspeedshop/legacy_tree_grid/refs/heads/main/assets/screenshot.png
 

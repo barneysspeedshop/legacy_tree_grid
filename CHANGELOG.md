@@ -1,5 +1,6 @@
-## 0.2.1
+## 0.3.0
 
+* **FEATURE**: Add the ability to disable the footer, and customize the footer options further
 * **CHORE**: Add screenshot
 
 ## 0.2.0

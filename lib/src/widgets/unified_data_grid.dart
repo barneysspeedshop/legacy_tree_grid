@@ -133,6 +133,13 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// This is determined by `_showDeleted` in client mode.
   final bool isUndeleteMode;
 
+  /// Whether to show the footer with pagination and action controls.
+  /// Defaults to `true`.
+  final bool showFooter;
+
+  /// Whether to show the "Include Children" checkbox in the footer when in tree mode.
+  /// Defaults to `true`.
+  final bool allowIncludeChildrenInFilterToggle;
   // --- Tree Grid Properties ---
 
   /// If `true`, the grid will operate in tree mode, rendering hierarchical data.
@@ -181,6 +188,8 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.initialSortColumnId,
     this.initialSortAscending = true,
     this.isUndeleteMode = false,
+    this.showFooter = true,
+    this.allowIncludeChildrenInFilterToggle = true,
     // Tree grid
     this.isTree = false,
     this.parentIdKey,
@@ -1184,38 +1193,39 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                   ],
                 ),
         ),
-        DataGridFooter(
-          currentPage: _currentPage,
-          pageSize: widget.pageSize,
-          totalRecords: totalRecords,
-          totalPages: totalPages,
-          onRefresh: refresh,
-          onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
-          onPreviousPage: !isFirstPage
-              ? () => _onPageChanged(_currentPage - 1)
-              : null,
-          onNextPage: !isLastPage
-              ? () => _onPageChanged(_currentPage + 1)
-              : null,
-          onLastPage: !isLastPage ? () => _onPageChanged(totalPages) : null,
-          onAdd: widget.onAdd,
-          onDelete: widget.onDelete != null && hasSelection
-              ? _handleDelete
-              : null,
-          onClearFilters: _clearFilters,
-          showDeleted: showDeletedValue,
-          onShowDeletedChanged: showDeletedChangedCallback,
-          isUndeleteMode: actualUndeleteMode,
-          leadingWidgets: widget.footerLeadingWidgets,
-          includeChildrenInFilter: widget.isTree
-              ? _includeChildrenInFilter
-              : null,
-          onIncludeChildrenInFilterChanged: widget.isTree
-              ? (value) => setState(() {
-                  _includeChildrenInFilter = value ?? false;
-                })
-              : null,
-        ),
+        if (widget.showFooter)
+          DataGridFooter(
+            currentPage: _currentPage,
+            pageSize: widget.pageSize,
+            totalRecords: totalRecords,
+            totalPages: totalPages,
+            onRefresh: refresh,
+            onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
+            onPreviousPage: !isFirstPage
+                ? () => _onPageChanged(_currentPage - 1)
+                : null,
+            onNextPage:
+                !isLastPage ? () => _onPageChanged(_currentPage + 1) : null,
+            onLastPage: !isLastPage ? () => _onPageChanged(totalPages) : null,
+            onAdd: widget.onAdd,
+            onDelete:
+                widget.onDelete != null && hasSelection ? _handleDelete : null,
+            onClearFilters: _clearFilters,
+            showDeleted: showDeletedValue,
+            onShowDeletedChanged: showDeletedChangedCallback,
+            isUndeleteMode: actualUndeleteMode,
+            leadingWidgets: widget.footerLeadingWidgets,
+            includeChildrenInFilter:
+                widget.isTree && widget.allowIncludeChildrenInFilterToggle
+                    ? _includeChildrenInFilter
+                    : null,
+            onIncludeChildrenInFilterChanged:
+                widget.isTree && widget.allowIncludeChildrenInFilterToggle
+                    ? (value) => setState(() {
+                          _includeChildrenInFilter = value ?? false;
+                        })
+                    : null,
+          ),
       ],
     );
   }
