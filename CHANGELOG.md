@@ -1,4 +1,4 @@
-##
+## 0.2.0
 
 * **FEATURE**: Add the ability to save views and restore them 
 * **FEATURE**: Add the ability to adjust the sequence of footer items
