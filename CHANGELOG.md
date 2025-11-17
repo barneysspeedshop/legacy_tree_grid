@@ -1,3 +1,7 @@
+## 0.3.1
+
+* **FIX**: Fix screenshot
+
 ## 0.3.0
 
 * **FEATURE**: Add the ability to disable the footer, and customize the footer options further
