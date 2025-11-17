@@ -66,6 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
       final jsonString = currentState.toJsonString();
       await prefs.setString('my_grid_view', jsonString);
 
+      if (!mounted) return;
+
       setState(() {
         _savedViewState = currentState;
       });
@@ -100,6 +102,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _clearSavedView() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('my_grid_view');
+
+    if (!mounted) return;
+
     setState(() {
       _savedViewState = null;
     });
