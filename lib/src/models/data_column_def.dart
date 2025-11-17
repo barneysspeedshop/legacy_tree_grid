@@ -109,10 +109,6 @@ class DataColumnDef {
                ? TextAlign.right
                : TextAlign.left),
        assert(
-         flex != null || width != null,
-         'Either flex or width must be provided for a column.',
-       ),
-       assert(
          filterType != FilterType.list ||
              (filterOptions != null && filterOptions.isNotEmpty),
          'If filterType is list, filterOptions must be provided and not empty.',
@@ -126,10 +122,10 @@ class DataColumnDef {
     String id = 'actions',
     String caption = '',
     double width = 30.0,
-    required List<ContextMenuItem> Function(
+    List<ContextMenuItem> Function(
       BuildContext context,
       Map<String, dynamic> rowData,
-    )
+    )?
     itemsBuilder,
     bool showOnRowHover = true,
   }) {
@@ -144,6 +140,7 @@ class DataColumnDef {
       showOnRowHover: showOnRowHover,
       itemsBuilder: itemsBuilder,
       cellBuilder: (context, rowData) {
+        if (itemsBuilder == null) return null;
         // Use a Builder to get a context that is a descendant of the cell,
         // which is crucial for correctly positioning the menu relative to the button.
         return Builder(

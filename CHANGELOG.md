@@ -1,3 +1,7 @@
+## 0.3.2
+
+* **CHORE**: Remove unused file, more permissive column size
+
 ## 0.3.1
 
 * **FIX**: Fix screenshot

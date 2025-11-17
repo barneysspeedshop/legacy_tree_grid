@@ -338,7 +338,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
 
       for (final column in widget.columns) {
         if (column.width != null) {
-          totalFixedWidth += column.width! * widget.scale;
+          totalFixedWidth += (column.width ?? 0) * widget.scale;
         } else {
           totalFlex += (column.flex ?? 1).toDouble();
         }
@@ -351,7 +351,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
 
       finalWidths = widget.columns.map((column) {
         if (column.width != null) {
-          return column.width! * widget.scale;
+          return (column.width ?? 0) * widget.scale;
         } else {
           return (column.flex ?? 1) * widthPerFlex;
         }

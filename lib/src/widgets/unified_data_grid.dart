@@ -10,9 +10,7 @@ export 'package:legacy_tree_grid/src/models/paginated_data_response.dart';
 import 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
 export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
 import 'package:legacy_tree_grid/src/widgets/data_grid_footer.dart';
-export 'package:legacy_tree_grid/src/widgets/data_grid_footer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart'
     show DataColumnDef, FilterType;
 
@@ -140,6 +138,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// Whether to show the "Include Children" checkbox in the footer when in tree mode.
   /// Defaults to `true`.
   final bool allowIncludeChildrenInFilterToggle;
+
   // --- Tree Grid Properties ---
 
   /// If `true`, the grid will operate in tree mode, rendering hierarchical data.
