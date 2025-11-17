@@ -1,8 +1,19 @@
+[![Pub Version](https://img.shields.io/pub/v/legacy_tree_grid)](https://pub.dev/packages/legacy_tree_grid)
 ![](https://img.shields.io/badge/coverage-36%25-red)
+[![Live Demo](https://img.shields.io/badge/live-demo-brightgreen)](https://barneysspeedshop.github.io/legacy_tree_grid/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A powerful, flexible, and feature-rich data grid for Flutter, designed to handle client-side, server-side, and hierarchical (tree) data with ease.
 
 The `legacy_tree_grid` provides a set of high-level widgets that simplify the display of tabular data, whether it's a small list managed on the client or a large, paginated dataset from a server.
+
+## About the Name
+
+The name `legacy_tree_grid` is a tribute to the package's author, Patrick Legacy. It does not imply that the package is outdated or unmaintained. In fact, it is a modern, actively developed, and highly capable solution for building production-ready Flutter applications.
+
+---
+
+![example](https://raw.githubusercontent.com/barneysspeedshop/legacy_tree_grid/main/screenshot.png)
 
 ## Key Features
 

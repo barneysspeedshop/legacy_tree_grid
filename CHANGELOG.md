@@ -1,3 +1,7 @@
+## 0.2.1
+
+* **CHORE**: Add screenshot
+
 ## 0.2.0
 
 * **FEATURE**: Add the ability to save views and restore them 
