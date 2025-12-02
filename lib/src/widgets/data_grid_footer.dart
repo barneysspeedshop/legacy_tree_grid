@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:legacy_tree_grid/src/utils/scale_notifier.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 /// Defines the types of actions that can be displayed in the footer.
@@ -142,7 +141,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
 
   Widget _buildIconButton(_FooterAction action, double size, Color color) {
     return IconButton(
-      icon: FaIcon(action.icon, size: size, color: color),
+      icon: Icon(action.icon, size: size, color: color),
       tooltip: action.tooltip,
       onPressed: action.onPressed,
     );
@@ -154,7 +153,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
     Color color,
   ) {
     return PopupMenuButton<_FooterAction>(
-      icon: FaIcon(FontAwesomeIcons.ellipsisVertical, size: size, color: color),
+      icon: Icon(Icons.more_vert, size: size, color: color),
       tooltip: 'More Actions',
       onSelected: (selectedAction) => selectedAction.onPressed?.call(),
       itemBuilder: (BuildContext context) {
@@ -189,7 +188,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
     final addAction = widget.onAdd == null
         ? null
         : _FooterAction(
-            icon: FontAwesomeIcons.circlePlus,
+            icon: Icons.add_circle_outline,
             tooltip: 'Add New',
             menuText: 'Add New',
             onPressed: widget.onAdd,
@@ -197,9 +196,8 @@ class _DataGridFooterState extends State<DataGridFooter> {
     final deleteAction = widget.onDelete == null
         ? null
         : _FooterAction(
-            icon: widget.isUndeleteMode
-                ? FontAwesomeIcons.trashCanArrowUp
-                : FontAwesomeIcons.trashCan,
+            icon:
+                widget.isUndeleteMode ? Icons.restore_from_trash : Icons.delete,
             tooltip: widget.isUndeleteMode
                 ? 'Undelete Selected'
                 : 'Delete Selected',
@@ -211,7 +209,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
     final clearFiltersAction = widget.onClearFilters == null
         ? null
         : _FooterAction(
-            icon: FontAwesomeIcons.filterCircleXmark,
+            icon: Icons.filter_alt_off_outlined,
             tooltip: 'Clear All Filters',
             menuText: 'Clear Filters',
             onPressed: widget.onClearFilters,
@@ -223,19 +221,19 @@ class _DataGridFooterState extends State<DataGridFooter> {
         lastPageAction;
     if (hasPagination) {
       firstPageAction = _FooterAction(
-        icon: FontAwesomeIcons.anglesLeft,
+        icon: Icons.first_page,
         tooltip: 'First Page',
         menuText: 'First Page',
         onPressed: widget.currentPage > 1 ? widget.onFirstPage : null,
       );
       prevPageAction = _FooterAction(
-        icon: FontAwesomeIcons.angleLeft,
+        icon: Icons.chevron_left,
         tooltip: 'Previous Page',
         menuText: 'Previous Page',
         onPressed: widget.currentPage > 1 ? widget.onPreviousPage : null,
       );
       nextPageAction = _FooterAction(
-        icon: FontAwesomeIcons.angleRight,
+        icon: Icons.chevron_right,
         tooltip: 'Next Page',
         menuText: 'Next Page',
         onPressed: widget.currentPage < widget.totalPages!
@@ -243,7 +241,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
             : null,
       );
       lastPageAction = _FooterAction(
-        icon: FontAwesomeIcons.anglesRight,
+        icon: Icons.last_page,
         tooltip: 'Last Page',
         menuText: 'Last Page',
         onPressed: widget.currentPage < widget.totalPages!
@@ -252,7 +250,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
       );
     }
     final refreshAction = _FooterAction(
-      icon: FontAwesomeIcons.rotate,
+      icon: Icons.refresh,
       tooltip: 'Refresh',
       menuText: 'Refresh Data',
       onPressed: widget.onRefresh,

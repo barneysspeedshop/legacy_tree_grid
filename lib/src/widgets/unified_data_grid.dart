@@ -10,7 +10,6 @@ export 'package:legacy_tree_grid/src/models/paginated_data_response.dart';
 import 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
 export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
 import 'package:legacy_tree_grid/src/widgets/data_grid_footer.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart'
     show DataColumnDef, FilterType;
 
@@ -159,6 +158,10 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// If provided, it will override other initial settings like `initialSortColumnId`.
   final GridViewState? initialViewState;
 
+  /// The height of the header row.
+  /// Defaults to 56.0.
+  final double headerHeight;
+
   const UnifiedDataGrid({
     super.key,
     required this.mode,
@@ -194,6 +197,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.parentIdKey,
     this.rootValue,
     this.rowHoverColor,
+    this.headerHeight = 56.0,
     this.initialViewState,
   }) : assert(
          (mode == DataGridMode.client &&
@@ -955,21 +959,21 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               hintText: 'Filter...',
               border: const OutlineInputBorder(),
               isDense: true,
-              prefixIcon: const Row(
+              prefixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   SizedBox(width: 12.0),
-                  FaIcon(FontAwesomeIcons.magnifyingGlass, size: 16),
+                  Icon(Icons.search, size: 18),
                 ],
               ),
               prefixIconConstraints: const BoxConstraints(minHeight: 36),
               suffixIcon: controller.text.isEmpty
                   ? null
-                  : SizedBox(
+                  : SizedBox( // Match the prefixIconConstraints
                       height: 36, // Match the prefixIconConstraints
                       child: IconButton(
                         padding: EdgeInsets.zero, // Remove default padding
-                        icon: const FaIcon(FontAwesomeIcons.xmark, size: 16),
+                        icon: const Icon(Icons.clear, size: 18),
                         tooltip: 'Clear Filter',
                         onPressed: () {
                           controller.clear();
@@ -1141,6 +1145,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     }
 
     final mainContent = CustomDataTable(
+      headerHeight: widget.headerHeight,
       columns: finalColumnDefs,
       rows: displayRows, // Use displayRows for both tree and flat list
       onRowTap: widget.onRowTap,

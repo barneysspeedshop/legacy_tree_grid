@@ -127,6 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: _isLoadingView
           ? const Center(child: CircularProgressIndicator())
           : UnifiedDataGrid(
+              headerHeight: 38,
               key: _gridKey,
               initialViewState: _savedViewState,
               onRowTap: (rowData) {

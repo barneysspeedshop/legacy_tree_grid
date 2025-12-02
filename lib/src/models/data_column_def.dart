@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:legacy_context_menu/legacy_context_menu.dart';
 
@@ -127,6 +126,7 @@ class DataColumnDef {
       Map<String, dynamic> rowData,
     )?
     itemsBuilder,
+    Widget? actionIcon,
     bool showOnRowHover = true,
   }) {
     return DataColumnDef(
@@ -162,11 +162,13 @@ class DataColumnDef {
                     menuItems: itemsBuilder(context, rowData),
                   );
                 },
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(
                     4.0,
                   ), // Smaller padding for the tap target
-                  child: FaIcon(FontAwesomeIcons.ellipsis, size: 16),
+                  child: actionIcon ??
+                      const Icon(Icons.more_horiz,
+                          size: 18), // Default Material icon
                 ),
               ),
             );

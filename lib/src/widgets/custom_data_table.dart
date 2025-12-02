@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:legacy_tree_grid/src/utils/color_utils.dart';
 import 'package:legacy_tree_grid/src/models/data_column_def.dart';
 import 'package:legacy_context_menu/legacy_context_menu.dart';
@@ -58,7 +57,7 @@ Alignment _textAlignToAlignment(TextAlign textAlign) {
 class CustomDataTable extends StatefulWidget {
   final List<DataColumnDef> columns;
   final List<Map<String, dynamic>> rows;
-  final double rowHeight;
+  final double dataRowHeight;
   final double headerHeight;
   final void Function(Map<String, dynamic> rowData)? onRowTap;
   final void Function(String columnId)? onSort;
@@ -122,12 +121,26 @@ class CustomDataTable extends StatefulWidget {
   /// as `isNameColumn` to make the table fill the screen width. Defaults to `false`.
   final bool useAvailableWidthDistribution;
 
+  /// An optional widget to display for an ascending sort indicator.
+  /// Defaults to a Material `Icons.arrow_upward`.
+  final Widget? sortIconAscending;
+
+  /// An optional widget to display for a descending sort indicator.
+  /// Defaults to a Material `Icons.arrow_downward`.
+  final Widget? sortIconDescending;
+
+  /// An optional widget to display for a collapsed tree node.
+  /// Defaults to a Material `Icons.chevron_right`.
+  final Widget? treeIconCollapsed;
+
+  /// An optional widget to display for an expanded tree node.
+  /// Defaults to a Material `Icons.expand_more`.
+  final Widget? treeIconExpanded;
   const CustomDataTable({
     super.key,
     required this.columns,
     required this.rows,
-    this.onRowTap,
-    this.rowHeight = 25.0,
+    this.onRowTap,    this.dataRowHeight = 25.0,
     this.headerHeight = 56.0,
     this.onSort,
     this.sortColumnId,
@@ -154,6 +167,10 @@ class CustomDataTable extends StatefulWidget {
     this.onColumnWidthsChanged,
     this.scrollController,
     this.useAvailableWidthDistribution = false,
+    this.sortIconAscending,
+    this.sortIconDescending,
+    this.treeIconCollapsed,
+    this.treeIconExpanded,
   }) : assert(
          !showCheckboxColumn ||
              (rowIdKey != null &&
@@ -432,6 +449,8 @@ class _CustomDataTableState extends State<CustomDataTable> {
       rowIdKey: widget.rowIdKey,
       selectedRowIds: widget.selectedRowIds,
       onSelectionChanged: widget.onSelectionChanged,
+      sortIconAscending: widget.sortIconAscending,
+      sortIconDescending: widget.sortIconDescending,
     );
   }
 
@@ -475,13 +494,13 @@ class _CustomDataTableState extends State<CustomDataTable> {
       isSelected: _selectedRowId == rowId,
       onHover: (hovering) {
         if (!mounted) return;
-        setState(() {
+        setState(() { 
           _hoveredRowId = hovering ? rowId : null;
         });
       },
       onRowTap: _handleRowTap,
       rowHoverColor: widget.rowHoverColor,
-      rowHeight: widget.rowHeight,
+      rowHeight: widget.dataRowHeight,
       scale: widget.scale,
       border: widget.border,
       showCheckboxColumn: widget.showCheckboxColumn,
@@ -495,6 +514,8 @@ class _CustomDataTableState extends State<CustomDataTable> {
       isEffectivelyVisibleKey: widget.isEffectivelyVisibleKey,
       allowColumnResize: widget.allowColumnResize,
       rowIdKey: widget.rowIdKey!,
+      treeIconCollapsed: widget.treeIconCollapsed,
+      treeIconExpanded: widget.treeIconExpanded, // scale was duplicated here
     );
   }
 
@@ -546,7 +567,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
                 SliverPersistentHeader(
                   pinned: true,
                   delegate: _SliverHeaderDelegate(
-                    height: widget.rowHeight * widget.scale,
+                    height: widget.dataRowHeight * widget.scale,
                     child: Material(
                       color: Theme.of(context).canvasColor,
                       child: _buildFilterRow(),
@@ -619,6 +640,8 @@ class _DataTableRow extends StatelessWidget {
   final String isEffectivelyVisibleKey;
   final String rowIdKey;
   final bool allowColumnResize;
+  final Widget? treeIconCollapsed;
+  final Widget? treeIconExpanded;
 
   const _DataTableRow({
     required this.rowData,
@@ -644,6 +667,8 @@ class _DataTableRow extends StatelessWidget {
     required this.isEffectivelyVisibleKey,
     required this.rowIdKey,
     required this.allowColumnResize,
+    this.treeIconCollapsed,
+    this.treeIconExpanded,
   });
 
   Widget _buildRowCheckbox() {
@@ -837,27 +862,24 @@ class _DataTableRow extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   SizedBox(width: indentation * 20.0 * scale),
-                                  if (hasChildren)
+                                  if (hasChildren) ...[
                                     InkWell(
                                       onTap: () => onToggleExpansion!(rowId),
                                       child: Padding(
                                         padding: const EdgeInsets.all(4.0),
-                                        child: FaIcon(
-                                          isExpanded
-                                              ? FontAwesomeIcons.caretDown
-                                              : FontAwesomeIcons.caretRight,
-                                          size: 16 * scale,
-                                          color: Theme.of(
-                                            context,
-                                          ).iconTheme.color,
-                                        ),
+                                        child: isExpanded // Use provided icons or default Material icons
+                                            ? (treeIconExpanded ??
+                                                const Icon(Icons.expand_more))
+                                            : (treeIconCollapsed ??
+                                                const Icon(
+                                                    Icons.chevron_right)),
                                       ),
                                     )
-                                  else
+                                  ] else
                                     SizedBox(
                                       width: 24.0 * scale,
                                     ), // Keep alignment consistent
-                                  SizedBox(width: 8.0 * scale),
+                                  const SizedBox(width: 8.0),
                                   Expanded(child: cellContent),
                                 ],
                               );
@@ -910,6 +932,8 @@ class _DataTableHeader extends StatelessWidget {
   final String? rowIdKey;
   final Set<String>? selectedRowIds;
   final ValueChanged<Set<String>>? onSelectionChanged;
+  final Widget? sortIconAscending;
+  final Widget? sortIconDescending;
 
   const _DataTableHeader({
     required this.columns,
@@ -925,6 +949,8 @@ class _DataTableHeader extends StatelessWidget {
     this.rowIdKey,
     this.selectedRowIds,
     this.onSelectionChanged,
+    this.sortIconAscending,
+    this.sortIconDescending,
   });
 
   Widget _buildSelectAllCheckbox() {
@@ -996,13 +1022,7 @@ class _DataTableHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             );
             final sortIndicator = isCurrentSortColumn
-                ? FaIcon(
-                    sortAscending
-                        ? FontAwesomeIcons.arrowUp
-                        : FontAwesomeIcons.arrowDown,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.primary,
-                  )
+                ? (sortAscending ? (sortIconAscending ?? const Icon(Icons.arrow_upward, size: 16)) : (sortIconDescending ?? const Icon(Icons.arrow_downward, size: 16)))
                 : const SizedBox.shrink();
 
             final headerContent = InkWell(
@@ -1071,7 +1091,7 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return child;
+    return SizedBox.expand(child: child);
   }
 
   @override
@@ -1082,8 +1102,6 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _SliverHeaderDelegate oldDelegate) {
-    // Rebuild if the child or height has changed. This is important for
-    // dynamic content like sort indicators or filter values.
-    return oldDelegate.height != height || oldDelegate.child != child;
+    return oldDelegate.child != child || oldDelegate.height != height;
   }
 }
