@@ -1,10 +1,8 @@
-## 0.3.3
-
-* **IMPROVEMENT**: Switch to material icons for better dependency management
 
 ## 0.3.2
 
 * **CHORE**: Remove unused file, more permissive column size
+* **IMPROVEMENT**: Switch to material icons for better dependency management
 
 ## 0.3.1
 
