@@ -969,7 +969,8 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               prefixIconConstraints: const BoxConstraints(minHeight: 36),
               suffixIcon: controller.text.isEmpty
                   ? null
-                  : SizedBox( // Match the prefixIconConstraints
+                  : SizedBox(
+                      // Match the prefixIconConstraints
                       height: 36, // Match the prefixIconConstraints
                       child: IconButton(
                         padding: EdgeInsets.zero, // Remove default padding

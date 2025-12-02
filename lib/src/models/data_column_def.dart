@@ -166,9 +166,12 @@ class DataColumnDef {
                   padding: EdgeInsets.all(
                     4.0,
                   ), // Smaller padding for the tap target
-                  child: actionIcon ??
-                      const Icon(Icons.more_horiz,
-                          size: 18), // Default Material icon
+                  child:
+                      actionIcon ??
+                      const Icon(
+                        Icons.more_horiz,
+                        size: 18,
+                      ), // Default Material icon
                 ),
               ),
             );

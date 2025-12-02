@@ -140,7 +140,8 @@ class CustomDataTable extends StatefulWidget {
     super.key,
     required this.columns,
     required this.rows,
-    this.onRowTap,    this.dataRowHeight = 25.0,
+    this.onRowTap,
+    this.dataRowHeight = 25.0,
     this.headerHeight = 56.0,
     this.onSort,
     this.sortColumnId,
@@ -494,7 +495,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
       isSelected: _selectedRowId == rowId,
       onHover: (hovering) {
         if (!mounted) return;
-        setState(() { 
+        setState(() {
           _hoveredRowId = hovering ? rowId : null;
         });
       },
@@ -867,14 +868,16 @@ class _DataTableRow extends StatelessWidget {
                                       onTap: () => onToggleExpansion!(rowId),
                                       child: Padding(
                                         padding: const EdgeInsets.all(4.0),
-                                        child: isExpanded // Use provided icons or default Material icons
+                                        child:
+                                            isExpanded // Use provided icons or default Material icons
                                             ? (treeIconExpanded ??
-                                                const Icon(Icons.expand_more))
+                                                  const Icon(Icons.expand_more))
                                             : (treeIconCollapsed ??
-                                                const Icon(
-                                                    Icons.chevron_right)),
+                                                  const Icon(
+                                                    Icons.chevron_right,
+                                                  )),
                                       ),
-                                    )
+                                    ),
                                   ] else
                                     SizedBox(
                                       width: 24.0 * scale,
@@ -1022,7 +1025,11 @@ class _DataTableHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             );
             final sortIndicator = isCurrentSortColumn
-                ? (sortAscending ? (sortIconAscending ?? const Icon(Icons.arrow_upward, size: 16)) : (sortIconDescending ?? const Icon(Icons.arrow_downward, size: 16)))
+                ? (sortAscending
+                      ? (sortIconAscending ??
+                            const Icon(Icons.arrow_upward, size: 16))
+                      : (sortIconDescending ??
+                            const Icon(Icons.arrow_downward, size: 16)))
                 : const SizedBox.shrink();
 
             final headerContent = InkWell(

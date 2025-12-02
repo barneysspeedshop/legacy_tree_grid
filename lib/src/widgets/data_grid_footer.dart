@@ -196,8 +196,9 @@ class _DataGridFooterState extends State<DataGridFooter> {
     final deleteAction = widget.onDelete == null
         ? null
         : _FooterAction(
-            icon:
-                widget.isUndeleteMode ? Icons.restore_from_trash : Icons.delete,
+            icon: widget.isUndeleteMode
+                ? Icons.restore_from_trash
+                : Icons.delete,
             tooltip: widget.isUndeleteMode
                 ? 'Undelete Selected'
                 : 'Delete Selected',
