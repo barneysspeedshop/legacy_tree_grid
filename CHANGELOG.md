@@ -1,3 +1,6 @@
+## 0.4.0
+
+* **FEATURE**: Added `footerBuilder` for completely custom footer implementations
 
 ## 0.3.2
 

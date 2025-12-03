@@ -7,3 +7,4 @@ export 'src/widgets/server_side_data_grid.dart';
 export 'src/models/data_column_def.dart';
 export 'src/models/data_grid_fetch_options.dart';
 export 'src/models/paginated_data_response.dart';
+export 'src/models/data_grid_footer_data.dart';

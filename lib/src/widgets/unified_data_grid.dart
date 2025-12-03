@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:legacy_tree_grid/src/models/data_grid_footer_data.dart';
 import 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
@@ -22,6 +23,11 @@ typedef IsItemDeleted<T> = bool Function(T item);
 /// A function that fetches a paginated list of data from the server.
 typedef ServerFetchDataCallback<T> =
     Future<PaginatedDataResponse<T>> Function(DataGridFetchOptions options);
+
+/// A function that builds a custom footer widget for the data grid.
+/// It provides [DataGridFooterData] which contains all the necessary state
+/// and callbacks for the footer to interact with the grid.
+typedef DataGridFooterBuilder = Widget Function(DataGridFooterData footerData);
 
 /// A function that fetches the entire list of data from a source for client-side processing.
 typedef ClientFetchDataCallback<T> = Future<List<T>> Function();
@@ -116,6 +122,10 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// Useful for adding custom filters or actions.
   final List<WidgetBuilder>? footerLeadingWidgets;
 
+  /// An optional builder to create a custom footer.
+  /// If provided, it overrides the default [DataGridFooter].
+  final DataGridFooterBuilder? footerBuilder;
+
   /// Whether to allow users to resize columns by dragging the header dividers.
   /// Defaults to `true`.
   final bool allowColumnResize;
@@ -186,6 +196,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.onServerShowDeletedChanged,
     this.allowFiltering = true,
     this.footerLeadingWidgets,
+    this.footerBuilder,
     this.allowColumnResize = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
@@ -1198,41 +1209,65 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                   ],
                 ),
         ),
-        if (widget.showFooter)
-          DataGridFooter(
-            currentPage: _currentPage,
-            pageSize: widget.pageSize,
-            totalRecords: totalRecords,
-            totalPages: totalPages,
-            onRefresh: refresh,
-            onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
-            onPreviousPage: !isFirstPage
-                ? () => _onPageChanged(_currentPage - 1)
-                : null,
-            onNextPage: !isLastPage
-                ? () => _onPageChanged(_currentPage + 1)
-                : null,
-            onLastPage: !isLastPage ? () => _onPageChanged(totalPages) : null,
-            onAdd: widget.onAdd,
-            onDelete: widget.onDelete != null && hasSelection
-                ? _handleDelete
-                : null,
-            onClearFilters: _clearFilters,
-            showDeleted: showDeletedValue,
-            onShowDeletedChanged: showDeletedChangedCallback,
-            isUndeleteMode: actualUndeleteMode,
-            leadingWidgets: widget.footerLeadingWidgets,
-            includeChildrenInFilter:
-                widget.isTree && widget.allowIncludeChildrenInFilterToggle
-                ? _includeChildrenInFilter
-                : null,
-            onIncludeChildrenInFilterChanged:
-                widget.isTree && widget.allowIncludeChildrenInFilterToggle
-                ? (value) => setState(() {
-                    _includeChildrenInFilter = value ?? false;
-                  })
-                : null,
-          ),
+        if (widget.showFooter) ...[
+          if (widget.footerBuilder != null)
+            widget.footerBuilder!(
+              DataGridFooterData(
+                currentPage: _currentPage,
+                pageSize: widget.pageSize,
+                totalRecords: totalRecords,
+                totalPages: totalPages,
+                onRefresh: refresh,
+                onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
+                onPreviousPage:
+                    !isFirstPage ? () => _onPageChanged(_currentPage - 1) : null,
+                onNextPage:
+                    !isLastPage ? () => _onPageChanged(_currentPage + 1) : null,
+                onLastPage:
+                    !isLastPage ? () => _onPageChanged(totalPages) : null,
+                onAdd: widget.onAdd,
+                onDelete:
+                    widget.onDelete != null && hasSelection ? _handleDelete : null,
+                onClearFilters: _clearFilters,
+                showDeleted: showDeletedValue,
+                onShowDeletedChanged: showDeletedChangedCallback,
+                isUndeleteMode: actualUndeleteMode,
+              ),
+            )
+          else
+            DataGridFooter(
+              currentPage: _currentPage,
+              pageSize: widget.pageSize,
+              totalRecords: totalRecords,
+              totalPages: totalPages,
+              onRefresh: refresh,
+              onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
+              onPreviousPage:
+                  !isFirstPage ? () => _onPageChanged(_currentPage - 1) : null,
+              onNextPage:
+                  !isLastPage ? () => _onPageChanged(_currentPage + 1) : null,
+              onLastPage:
+                  !isLastPage ? () => _onPageChanged(totalPages) : null,
+              onAdd: widget.onAdd,
+              onDelete:
+                  widget.onDelete != null && hasSelection ? _handleDelete : null,
+              onClearFilters: _clearFilters,
+              showDeleted: showDeletedValue,
+              onShowDeletedChanged: showDeletedChangedCallback,
+              isUndeleteMode: actualUndeleteMode,
+              leadingWidgets: widget.footerLeadingWidgets,
+              includeChildrenInFilter:
+                  widget.isTree && widget.allowIncludeChildrenInFilterToggle
+                      ? _includeChildrenInFilter
+                      : null,
+              onIncludeChildrenInFilterChanged:
+                  widget.isTree && widget.allowIncludeChildrenInFilterToggle
+                      ? (value) => setState(() {
+                            _includeChildrenInFilter = value ?? false;
+                          })
+                      : null,
+            ),
+        ]
       ],
     );
   }
