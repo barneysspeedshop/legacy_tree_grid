@@ -136,6 +136,10 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// The initial sort direction. Defaults to `true` (ascending).
   final bool initialSortAscending;
 
+  /// Whether to allow users to sort columns by clicking on the header.
+  /// Defaults to `true`.
+  final bool allowSorting;
+
   /// Whether the delete button should be in "undelete" mode (different icon and text).
   /// This is determined by `_showDeleted` in client mode.
   final bool isUndeleteMode;
@@ -215,6 +219,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.allowColumnResize = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
+    this.allowSorting = true,
     this.isUndeleteMode = false,
     this.showFooter = true,
     this.allowIncludeChildrenInFilterToggle = true,
@@ -1209,10 +1214,10 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       headerHeight: widget.headerHeight,
       columns: finalColumnDefs,
       rowHeightBuilder: widget.rowHeightBuilder,
-      headerTrailingWidgets: widget.headerTrailingWidgets,
+      headerTrailingWidgets: widget.headerTrailingWidgets, // Use displayRows for both tree and flat list
       rows: displayRows, // Use displayRows for both tree and flat list
       onRowTap: widget.onRowTap,
-      onSort: _handleSort,
+      onSort: widget.allowSorting ? _handleSort : null,
       sortColumnId: _sortColumnId,
       sortAscending: _sortAscending,
       showCheckboxColumn: widget.showCheckboxColumn,

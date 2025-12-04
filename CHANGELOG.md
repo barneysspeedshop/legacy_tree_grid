@@ -1,3 +1,7 @@
+## 0.8.0
+
+* **FEATURE**: Added `allowSorting` so you can disable sorting in the Unified Data Grid.
+
 ## 0.7.0
 
 * **FEATURE**: Added two optional properties to the UnifiedDataGrid widget:
