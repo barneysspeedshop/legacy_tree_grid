@@ -1,3 +1,9 @@
+## 0.7.0
+
+* **FEATURE**: Added two optional properties to the UnifiedDataGrid widget:
+    * `initialExpandedRowIds`: A `Set<String>` to specify which tree nodes should be expanded when the grid first loads.
+    * `onRowToggle`: A callback `void Function(String rowId, bool isExpanded)` that gets called whenever a user expands or collapses a row in the tree.
+
 ## 0.6.0
 
 * **FEATURE**: Add support for a scrollController

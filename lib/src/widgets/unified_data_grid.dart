@@ -161,6 +161,12 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// Defaults to `null`.
   final dynamic rootValue;
 
+  /// A set of row IDs that should be initially expanded when the grid is in tree mode.
+  final Set<String>? initialExpandedRowIds;
+
+  /// A callback function that is invoked when a row's expansion state is toggled in tree mode.
+  final void Function(String rowId, bool isExpanded)? onRowToggle;
+
   /// An optional color for the row hover effect.
   final Color? rowHoverColor;
 
@@ -216,6 +222,8 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.isTree = false,
     this.parentIdKey,
     this.rootValue,
+    this.initialExpandedRowIds,
+    this.onRowToggle,
     this.rowHoverColor,
     this.headerHeight = 56.0,
     this.initialViewState,
@@ -264,8 +272,8 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   // --- Client-Mode State ---
   List<T> _allData = [];
   List<Map<String, dynamic>> _treeData = [];
-  bool _showDeleted = false;
-  final Set<String> _expandedRowIds = {};
+  late bool _showDeleted;
+  late Set<String> _expandedRowIds;
   bool _includeChildrenInFilter = true;
 
   // --- Server-Mode State ---
@@ -278,6 +286,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     _gridScrollController =
         widget.scrollController ??
         ScrollController(debugLabel: 'UnifiedDataGrid');
+
+    _expandedRowIds = widget.initialExpandedRowIds ?? {};
+    _showDeleted = false;
 
     if (widget.initialViewState != null) {
       _applyInitialViewState(widget.initialViewState!);
@@ -584,11 +595,15 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     if (!mounted) return;
 
     setState(() {
+      bool isNowExpanded;
       if (_expandedRowIds.contains(rowId)) {
         _expandedRowIds.remove(rowId);
+        isNowExpanded = false;
       } else {
         _expandedRowIds.add(rowId);
+        isNowExpanded = true;
       }
+      widget.onRowToggle?.call(rowId, isNowExpanded);
     });
   }
 
