@@ -172,6 +172,12 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// Defaults to 56.0.
   final double headerHeight;
 
+  /// An optional builder to dynamically determine the height of each row.
+  /// If not provided, `dataRowHeight` from `CustomDataTable` is used.
+  final double Function(Map<String, dynamic> rowData)? rowHeightBuilder;
+
+  final List<WidgetBuilder>? headerTrailingWidgets;
+
   const UnifiedDataGrid({
     super.key,
     required this.mode,
@@ -210,6 +216,8 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.rowHoverColor,
     this.headerHeight = 56.0,
     this.initialViewState,
+    this.rowHeightBuilder,
+    this.headerTrailingWidgets,
   }) : assert(
          (mode == DataGridMode.client &&
                  (clientData != null || clientFetch != null)) ||
@@ -1159,6 +1167,8 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     final mainContent = CustomDataTable(
       headerHeight: widget.headerHeight,
       columns: finalColumnDefs,
+      rowHeightBuilder: widget.rowHeightBuilder,
+      headerTrailingWidgets: widget.headerTrailingWidgets,
       rows: displayRows, // Use displayRows for both tree and flat list
       onRowTap: widget.onRowTap,
       onSort: _handleSort,

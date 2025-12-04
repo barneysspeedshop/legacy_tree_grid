@@ -91,6 +91,7 @@ class CustomDataTable extends StatefulWidget {
     List<DataColumnDef> columns,
   )?
   rowBuilder;
+  final double Function(Map<String, dynamic> rowData)? rowHeightBuilder;
 
   /// The border to display between rows and columns.
   /// Use `TableBorder.symmetric(inside: ...)` to add borders between cells.
@@ -101,6 +102,9 @@ class CustomDataTable extends StatefulWidget {
 
   /// Whether to allow users to resize columns by dragging the header dividers.
   final bool allowColumnResize;
+
+  /// A list of widgets to display at the end of the header row.
+  final List<WidgetBuilder>? headerTrailingWidgets;
 
   /// An optional color for the row hover effect.
   final Color? rowHoverColor;
@@ -172,6 +176,8 @@ class CustomDataTable extends StatefulWidget {
     this.sortIconDescending,
     this.treeIconCollapsed,
     this.treeIconExpanded,
+    this.rowHeightBuilder,
+    this.headerTrailingWidgets,
   }) : assert(
          !showCheckboxColumn ||
              (rowIdKey != null &&
@@ -452,6 +458,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
       onSelectionChanged: widget.onSelectionChanged,
       sortIconAscending: widget.sortIconAscending,
       sortIconDescending: widget.sortIconDescending,
+      headerTrailingWidgets: widget.headerTrailingWidgets,
     );
   }
 
@@ -486,6 +493,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
     }
     final rowId = _extractValue(rowData, widget.rowIdKey!).toString();
 
+    final double dynamicRowHeight =
+        widget.rowHeightBuilder?.call(rowData) ?? widget.dataRowHeight;
+
     return _DataTableRow(
       rowData: rowData,
       columns: widget.columns,
@@ -501,7 +511,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
       },
       onRowTap: _handleRowTap,
       rowHoverColor: widget.rowHoverColor,
-      rowHeight: widget.dataRowHeight,
+      rowHeight: dynamicRowHeight,
       scale: widget.scale,
       border: widget.border,
       showCheckboxColumn: widget.showCheckboxColumn,
@@ -777,13 +787,17 @@ class _DataTableRow extends StatelessWidget {
                 ? SizedBox(
                     height: rowHeight * scale,
                     child: Container(
-                      decoration: BoxDecoration(border: containerBorder),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (showCheckboxColumn) _buildRowCheckbox(),
-                          ...List.generate(columns.length, (index) {
-                            final column = columns[index];
+                      decoration: BoxDecoration(
+                        border: containerBorder,
+                      ),
+                      child: InkWell(
+                        onTap: onRowTap != null ? () => onRowTap!(rowData) : null,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (showCheckboxColumn) _buildRowCheckbox(),
+                            ...List.generate(columns.length, (index) {
+                              final column = columns[index];
                             String displayValue;
                             if (column.formattedValue != null) {
                               displayValue = column.formattedValue!(rowData);
@@ -888,29 +902,30 @@ class _DataTableRow extends StatelessWidget {
                               );
                             }
 
-                            final cell = SizedBox(
-                              width: columnWidths[index],
-                              child: cellContent,
-                            );
-
-                            if (index < columns.length - 1) {
-                              final bool isDraggable =
-                                  allowColumnResize &&
-                                  columns[index].resizable &&
-                                  columns[index + 1].resizable;
-
-                              final divider = VerticalDivider(
-                                width: isDraggable ? 10.0 : 1.0,
-                                thickness: 1,
-                                color: border?.verticalInside.color,
+                              final cell = SizedBox(
+                                width: columnWidths[index],
+                                child: cellContent,
                               );
-                              return [cell, divider];
-                            }
-                            return [cell];
-                          }).expand((e) => e),
-                        ],
+
+                              if (index < columns.length - 1) {
+                                final bool isDraggable =
+                                    allowColumnResize &&
+                                    columns[index].resizable &&
+                                    columns[index + 1].resizable;
+
+                                final divider = VerticalDivider(
+                                  width: isDraggable ? 10.0 : 1.0,
+                                  thickness: 1,
+                                  color: border?.verticalInside.color,
+                                );
+                                return [cell, divider];
+                              }
+                              return [cell];
+                            }).expand((e) => e),
+                          ],
+                        ),
                       ),
-                    ),
+                    )
                   )
                 : const SizedBox.shrink(),
           ),
@@ -937,6 +952,7 @@ class _DataTableHeader extends StatelessWidget {
   final ValueChanged<Set<String>>? onSelectionChanged;
   final Widget? sortIconAscending;
   final Widget? sortIconDescending;
+  final List<WidgetBuilder>? headerTrailingWidgets;
 
   const _DataTableHeader({
     required this.columns,
@@ -954,6 +970,7 @@ class _DataTableHeader extends StatelessWidget {
     this.onSelectionChanged,
     this.sortIconAscending,
     this.sortIconDescending,
+    this.headerTrailingWidgets,
   });
 
   Widget _buildSelectAllCheckbox() {
@@ -1025,7 +1042,7 @@ class _DataTableHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             );
             final sortIndicator = isCurrentSortColumn
-                ? (sortAscending
+                ? (sortAscending //
                       ? (sortIconAscending ??
                             const Icon(Icons.arrow_upward, size: 16))
                       : (sortIconDescending ??
@@ -1033,7 +1050,7 @@ class _DataTableHeader extends StatelessWidget {
                 : const SizedBox.shrink();
 
             final headerContent = InkWell(
-              onTap: column.sortable && onSort != null
+              onTap: column.sortable && onSort != null //
                   ? () => onSort!(column.id)
                   : null,
               child: Row(
@@ -1048,10 +1065,24 @@ class _DataTableHeader extends StatelessWidget {
               ),
             );
 
-            final headerCell = SizedBox(
-              width: columnWidths[index],
-              child: headerContent,
-            );
+            Widget finalHeaderCell;
+            if (index == columns.length - 1 &&
+                headerTrailingWidgets != null) {
+              finalHeaderCell = SizedBox(
+                width: columnWidths[index],
+                child: Row(
+                  children: [
+                    Expanded(child: headerContent),
+                    ...headerTrailingWidgets!.map((builder) => builder(context)),
+                  ],
+                ),
+              );
+            } else {
+              finalHeaderCell = SizedBox(
+                width: columnWidths[index],
+                child: headerContent,
+              );
+            }
 
             if (index < columns.length - 1) {
               final bool isDraggable =
@@ -1075,9 +1106,9 @@ class _DataTableHeader extends StatelessWidget {
                       width: 1,
                       color: border?.verticalInside.color,
                     );
-              return [headerCell, divider];
+              return [finalHeaderCell, divider];
             }
-            return [headerCell];
+            return [finalHeaderCell];
           }).expand((e) => e),
         ],
       ),

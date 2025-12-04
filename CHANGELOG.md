@@ -1,3 +1,9 @@
+## 0.5.0
+
+* **FEATURE**: Add support for dynamic heights
+* **FEATURE**: Add support for header actions
+* **FEATURE**: Add support for enhanced row actions: allow configuring secondary click or long press on a row 
+
 ## 0.4.0
 
 * **FEATURE**: Added `footerBuilder` for completely custom footer implementations
