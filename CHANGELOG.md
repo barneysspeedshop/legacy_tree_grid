@@ -1,3 +1,7 @@
+## 0.6.0
+
+* **FEATURE**: Add support for a scrollController
+
 ## 0.5.0
 
 * **FEATURE**: Add support for dynamic heights

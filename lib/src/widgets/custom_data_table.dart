@@ -787,120 +787,122 @@ class _DataTableRow extends StatelessWidget {
                 ? SizedBox(
                     height: rowHeight * scale,
                     child: Container(
-                      decoration: BoxDecoration(
-                        border: containerBorder,
-                      ),
+                      decoration: BoxDecoration(border: containerBorder),
                       child: InkWell(
-                        onTap: onRowTap != null ? () => onRowTap!(rowData) : null,
+                        onTap: onRowTap != null
+                            ? () => onRowTap!(rowData)
+                            : null,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (showCheckboxColumn) _buildRowCheckbox(),
                             ...List.generate(columns.length, (index) {
                               final column = columns[index];
-                            String displayValue;
-                            if (column.formattedValue != null) {
-                              displayValue = column.formattedValue!(rowData);
-                            } else {
-                              displayValue =
-                                  _extractValue(
-                                    rowData,
-                                    column.id,
-                                  )?.toString() ??
-                                  '';
-                            }
+                              String displayValue;
+                              if (column.formattedValue != null) {
+                                displayValue = column.formattedValue!(rowData);
+                              } else {
+                                displayValue =
+                                    _extractValue(
+                                      rowData,
+                                      column.id,
+                                    )?.toString() ??
+                                    '';
+                              }
 
-                            Widget cellContent;
-                            if (column.cellBuilder != null) {
-                              // If a builder is provided, call it.
-                              cellContent =
-                                  column.cellBuilder!(context, rowData) ??
-                                  Text(
-                                    displayValue,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  );
-                            } else {
-                              // Default rendering for non-interactive cells.
-                              // It's wrapped in a GestureDetector to handle onRowTap for this specific cell.
-                              cellContent = GestureDetector(
-                                behavior: HitTestBehavior
-                                    .opaque, // Ensure the whole cell area is tappable
-                                onTap: onRowTap != null
-                                    ? () => onRowTap!(rowData)
-                                    : null,
-                                child: Container(
-                                  // Use a container to fill the cell and align the text
-                                  width: double.infinity,
-                                  alignment: _textAlignToAlignment(
-                                    column.alignment,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                  ),
-                                  child: Text(
-                                    displayValue,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                ),
-                              );
-                            }
-
-                            // If the column is configured to only show on hover, wrap the content
-                            // in a Visibility widget that is controlled by the row's hover state.
-                            if (column.showOnRowHover) {
-                              cellContent = Visibility.maintain(
-                                visible: isHovered,
-                                child: cellContent,
-                              );
-                            }
-
-                            if (isTree && column.isNameColumn) {
-                              final int indentation =
-                                  rowData[indentationLevelKey] as int? ?? 0;
-                              final bool hasChildren =
-                                  rowData[hasChildrenKey] ==
-                                  false; // Inverted logic from original
-                              final bool isExpanded =
-                                  rowData[isExpandedKey] as bool? ?? false;
-                              final String rowId = _extractValue(
-                                rowData,
-                                rowIdKey,
-                              ).toString();
-
-                              cellContent = Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(width: indentation * 20.0 * scale),
-                                  if (hasChildren) ...[
-                                    InkWell(
-                                      onTap: () => onToggleExpansion!(rowId),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child:
-                                            isExpanded // Use provided icons or default Material icons
-                                            ? (treeIconExpanded ??
-                                                  const Icon(Icons.expand_more))
-                                            : (treeIconCollapsed ??
-                                                  const Icon(
-                                                    Icons.chevron_right,
-                                                  )),
-                                      ),
+                              Widget cellContent;
+                              if (column.cellBuilder != null) {
+                                // If a builder is provided, call it.
+                                cellContent =
+                                    column.cellBuilder!(context, rowData) ??
+                                    Text(
+                                      displayValue,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    );
+                              } else {
+                                // Default rendering for non-interactive cells.
+                                // It's wrapped in a GestureDetector to handle onRowTap for this specific cell.
+                                cellContent = GestureDetector(
+                                  behavior: HitTestBehavior
+                                      .opaque, // Ensure the whole cell area is tappable
+                                  onTap: onRowTap != null
+                                      ? () => onRowTap!(rowData)
+                                      : null,
+                                  child: Container(
+                                    // Use a container to fill the cell and align the text
+                                    width: double.infinity,
+                                    alignment: _textAlignToAlignment(
+                                      column.alignment,
                                     ),
-                                  ] else
-                                    SizedBox(
-                                      width: 24.0 * scale,
-                                    ), // Keep alignment consistent
-                                  const SizedBox(width: 8.0),
-                                  Expanded(child: cellContent),
-                                ],
-                              );
-                            }
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                    ),
+                                    child: Text(
+                                      displayValue,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              // If the column is configured to only show on hover, wrap the content
+                              // in a Visibility widget that is controlled by the row's hover state.
+                              if (column.showOnRowHover) {
+                                cellContent = Visibility.maintain(
+                                  visible: isHovered,
+                                  child: cellContent,
+                                );
+                              }
+
+                              if (isTree && column.isNameColumn) {
+                                final int indentation =
+                                    rowData[indentationLevelKey] as int? ?? 0;
+                                final bool hasChildren =
+                                    rowData[hasChildrenKey] ==
+                                    false; // Inverted logic from original
+                                final bool isExpanded =
+                                    rowData[isExpandedKey] as bool? ?? false;
+                                final String rowId = _extractValue(
+                                  rowData,
+                                  rowIdKey,
+                                ).toString();
+
+                                cellContent = Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(width: indentation * 20.0 * scale),
+                                    if (hasChildren) ...[
+                                      InkWell(
+                                        onTap: () => onToggleExpansion!(rowId),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child:
+                                              isExpanded // Use provided icons or default Material icons
+                                              ? (treeIconExpanded ??
+                                                    const Icon(
+                                                      Icons.expand_more,
+                                                    ))
+                                              : (treeIconCollapsed ??
+                                                    const Icon(
+                                                      Icons.chevron_right,
+                                                    )),
+                                        ),
+                                      ),
+                                    ] else
+                                      SizedBox(
+                                        width: 24.0 * scale,
+                                      ), // Keep alignment consistent
+                                    const SizedBox(width: 8.0),
+                                    Expanded(child: cellContent),
+                                  ],
+                                );
+                              }
 
                               final cell = SizedBox(
                                 width: columnWidths[index],
@@ -925,7 +927,7 @@ class _DataTableRow extends StatelessWidget {
                           ],
                         ),
                       ),
-                    )
+                    ),
                   )
                 : const SizedBox.shrink(),
           ),
@@ -1050,7 +1052,10 @@ class _DataTableHeader extends StatelessWidget {
                 : const SizedBox.shrink();
 
             final headerContent = InkWell(
-              onTap: column.sortable && onSort != null //
+              onTap:
+                  column.sortable &&
+                      onSort !=
+                          null //
                   ? () => onSort!(column.id)
                   : null,
               child: Row(
@@ -1066,14 +1071,15 @@ class _DataTableHeader extends StatelessWidget {
             );
 
             Widget finalHeaderCell;
-            if (index == columns.length - 1 &&
-                headerTrailingWidgets != null) {
+            if (index == columns.length - 1 && headerTrailingWidgets != null) {
               finalHeaderCell = SizedBox(
                 width: columnWidths[index],
                 child: Row(
                   children: [
                     Expanded(child: headerContent),
-                    ...headerTrailingWidgets!.map((builder) => builder(context)),
+                    ...headerTrailingWidgets!.map(
+                      (builder) => builder(context),
+                    ),
                   ],
                 ),
               );

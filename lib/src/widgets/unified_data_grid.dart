@@ -178,6 +178,9 @@ class UnifiedDataGrid<T> extends StatefulWidget {
 
   final List<WidgetBuilder>? headerTrailingWidgets;
 
+  /// An optional scroll controller for the grid's primary scroll view.
+  final ScrollController? scrollController;
+
   const UnifiedDataGrid({
     super.key,
     required this.mode,
@@ -218,6 +221,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.initialViewState,
     this.rowHeightBuilder,
     this.headerTrailingWidgets,
+    this.scrollController,
   }) : assert(
          (mode == DataGridMode.client &&
                  (clientData != null || clientFetch != null)) ||
@@ -246,6 +250,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
 
 class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   // --- Common State ---
+  late final ScrollController _gridScrollController;
   bool _isLoading = true;
   Set<String> _selectedRowIds = {};
   int _currentPage = 1;
@@ -270,6 +275,10 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   @override
   void initState() {
     super.initState();
+    _gridScrollController =
+        widget.scrollController ??
+        ScrollController(debugLabel: 'UnifiedDataGrid');
+
     if (widget.initialViewState != null) {
       _applyInitialViewState(widget.initialViewState!);
       _columnOrder = widget.initialViewState!.columnOrder;
@@ -292,6 +301,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    if (widget.scrollController == null) {
+      _gridScrollController.dispose();
+    }
     for (var controller in _filterControllers.values) {
       controller.dispose();
     }
@@ -301,6 +313,13 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   @override
   void didUpdateWidget(covariant UnifiedDataGrid<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.scrollController != oldWidget.scrollController) {
+      if (oldWidget.scrollController == null) {
+        _gridScrollController.dispose();
+      }
+      _gridScrollController = widget.scrollController ?? ScrollController();
+    }
     if (widget.mode == DataGridMode.client) {
       if (widget.clientData != null &&
           !listEquals(widget.clientData, oldWidget.clientData)) {
@@ -336,6 +355,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   /// This can be used to save the user's current view (column widths, order,
   /// filters, and sorting) for later restoration.
   GridViewState getCurrentViewState() {
+    // It's generally not recommended to save scroll offset in view state
+    // as data can change, making the offset invalid. But if needed, it could be
+    // added here: 'scrollOffset: _gridScrollController.offset'.
     return GridViewState(
       columnWidths: Map.fromIterables(
         _getFinalColumnDefs().map((c) => c.id),
@@ -347,6 +369,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       sortAscending: _sortAscending,
     );
   }
+
+  /// Exposes the grid's internal scroll controller.
+  ScrollController get gridScrollController => _gridScrollController;
 
   /// Applies a given [GridViewState] to the grid, updating its sorting,
   /// filtering, column order, and widths.
@@ -1165,6 +1190,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     }
 
     final mainContent = CustomDataTable(
+      scrollController: _gridScrollController,
       headerHeight: widget.headerHeight,
       columns: finalColumnDefs,
       rowHeightBuilder: widget.rowHeightBuilder,
