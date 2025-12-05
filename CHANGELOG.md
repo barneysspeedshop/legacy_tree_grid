@@ -1,3 +1,7 @@
+## 0.9.0
+
+* **FEATURE**: Add `selectedRowId` so you can programmatically select a row in the Unified Data Grid.
+
 ## 0.8.0
 
 * **FEATURE**: Added `allowSorting` so you can disable sorting in the Unified Data Grid.

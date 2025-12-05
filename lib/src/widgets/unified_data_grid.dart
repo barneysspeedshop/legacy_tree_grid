@@ -191,6 +191,9 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// An optional scroll controller for the grid's primary scroll view.
   final ScrollController? scrollController;
 
+  /// An optional ID of a row to be programmatically selected.
+  final String? selectedRowId;
+
   const UnifiedDataGrid({
     super.key,
     required this.mode,
@@ -235,6 +238,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.rowHeightBuilder,
     this.headerTrailingWidgets,
     this.scrollController,
+    this.selectedRowId,
   }) : assert(
          (mode == DataGridMode.client &&
                  (clientData != null || clientFetch != null)) ||
@@ -294,6 +298,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
     _expandedRowIds = widget.initialExpandedRowIds ?? {};
     _showDeleted = false;
+    _selectedRowIds = widget.selectedRowId != null ? {widget.selectedRowId!} : {};
 
     if (widget.initialViewState != null) {
       _applyInitialViewState(widget.initialViewState!);
@@ -335,6 +340,13 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         _gridScrollController.dispose();
       }
       _gridScrollController = widget.scrollController ?? ScrollController();
+    }
+
+    if (widget.selectedRowId != oldWidget.selectedRowId) {
+      setState(() {
+        _selectedRowIds =
+            widget.selectedRowId != null ? {widget.selectedRowId!} : {};
+      });
     }
     if (widget.mode == DataGridMode.client) {
       if (widget.clientData != null &&
