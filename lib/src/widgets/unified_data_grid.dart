@@ -11,8 +11,7 @@ export 'package:legacy_tree_grid/src/models/paginated_data_response.dart';
 import 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
 export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart';
 import 'package:legacy_tree_grid/src/widgets/data_grid_footer.dart';
-export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart'
-    show DataColumnDef, FilterType;
+export 'package:legacy_tree_grid/src/widgets/custom_data_table.dart' show DataColumnDef, FilterType;
 
 /// A function that converts a model of type T to a map for the data table.
 typedef ItemToMap<T> = Map<String, dynamic> Function(T item);
@@ -21,8 +20,7 @@ typedef ItemToMap<T> = Map<String, dynamic> Function(T item);
 typedef IsItemDeleted<T> = bool Function(T item);
 
 /// A function that fetches a paginated list of data from the server.
-typedef ServerFetchDataCallback<T> =
-    Future<PaginatedDataResponse<T>> Function(DataGridFetchOptions options);
+typedef ServerFetchDataCallback<T> = Future<PaginatedDataResponse<T>> Function(DataGridFetchOptions options);
 
 /// A function that builds a custom footer widget for the data grid.
 /// It provides [DataGridFooterData] which contains all the necessary state
@@ -240,24 +238,16 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.scrollController,
     this.selectedRowId,
   }) : assert(
-         (mode == DataGridMode.client &&
-                 (clientData != null || clientFetch != null)) ||
-             (mode == DataGridMode.server && serverFetch != null),
+         (mode == DataGridMode.client && (clientData != null || clientFetch != null)) || (mode == DataGridMode.server && serverFetch != null),
          'Provide a data source that matches the selected mode.',
        ),
        assert(
-         mode == DataGridMode.client
-             ? (clientData == null || clientFetch == null)
-             : true,
+         mode == DataGridMode.client ? (clientData == null || clientFetch == null) : true,
          'In client mode, either `clientData` or `clientFetch` can be provided, but not both.',
        ),
+       assert(!showDeletedToggle || isDeleted != null, 'The `isDeleted` function must be provided if `showDeletedToggle` is true.'),
        assert(
-         !showDeletedToggle || isDeleted != null,
-         'The `isDeleted` function must be provided if `showDeletedToggle` is true.',
-       ),
-       assert(
-         (serverShowDeletedValue == null) ==
-             (onServerShowDeletedChanged == null),
+         (serverShowDeletedValue == null) == (onServerShowDeletedChanged == null),
          'In server mode, `serverShowDeletedValue` and `onServerShowDeletedChanged` must be provided together.',
        );
 
@@ -292,15 +282,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   @override
   void initState() {
     super.initState();
-    _gridScrollController =
-        widget.scrollController ??
-        ScrollController(debugLabel: 'UnifiedDataGrid');
+    _gridScrollController = widget.scrollController ?? ScrollController(debugLabel: 'UnifiedDataGrid');
 
     _expandedRowIds = widget.initialExpandedRowIds ?? {};
     _showDeleted = false;
-    _selectedRowIds = widget.selectedRowId != null
-        ? {widget.selectedRowId!}
-        : {};
+    _selectedRowIds = widget.selectedRowId != null ? {widget.selectedRowId!} : {};
 
     if (widget.initialViewState != null) {
       _applyInitialViewState(widget.initialViewState!);
@@ -346,14 +332,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
     if (widget.selectedRowId != oldWidget.selectedRowId) {
       setState(() {
-        _selectedRowIds = widget.selectedRowId != null
-            ? {widget.selectedRowId!}
-            : {};
+        _selectedRowIds = widget.selectedRowId != null ? {widget.selectedRowId!} : {};
       });
     }
     if (widget.mode == DataGridMode.client) {
-      if (widget.clientData != null &&
-          !listEquals(widget.clientData, oldWidget.clientData)) {
+      if (widget.clientData != null && !listEquals(widget.clientData, oldWidget.clientData)) {
         _setDataFromWidget();
       }
     } else {
@@ -390,10 +373,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     // as data can change, making the offset invalid. But if needed, it could be
     // added here: 'scrollOffset: _gridScrollController.offset'.
     return GridViewState(
-      columnWidths: Map.fromIterables(
-        _getFinalColumnDefs().map((c) => c.id),
-        _columnWidths,
-      ),
+      columnWidths: Map.fromIterables(_getFinalColumnDefs().map((c) => c.id), _columnWidths),
       columnOrder: _getFinalColumnDefs().map((c) => c.id).toList(),
       filters: _filterValues,
       sortColumnId: _sortColumnId,
@@ -511,13 +491,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       _resetInternalFilters();
     });
 
-    final options = DataGridFetchOptions(
-      page: 1,
-      pageSize: widget.pageSize,
-      sortBy: _sortColumnId,
-      sortAscending: _sortAscending,
-      filters: const {},
-    );
+    final options = DataGridFetchOptions(page: 1, pageSize: widget.pageSize, sortBy: _sortColumnId, sortAscending: _sortAscending, filters: const {});
 
     try {
       final data = await widget.serverFetch!(options);
@@ -559,9 +533,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   // --- ==================== Tree Data Processing =================== ---
 
   List<Map<String, dynamic>> _buildTree(List<T> sourceData) {
-    final List<Map<String, dynamic>> mappedData = sourceData
-        .map((item) => Map<String, dynamic>.from(widget.toMap(item)))
-        .toList();
+    final List<Map<String, dynamic>> mappedData = sourceData.map((item) => Map<String, dynamic>.from(widget.toMap(item))).toList();
     final Map<String, List<Map<String, dynamic>>> childrenMap = {};
     final Map<String, Map<String, dynamic>> itemMap = {};
 
@@ -585,9 +557,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
           if (valA == null && valB == null) return 0;
           if (valA == null) return 1;
           if (valB == null) return -1;
-          int compare = valA is Comparable && valB is Comparable
-              ? valA.compareTo(valB)
-              : valA.toString().compareTo(valB.toString());
+          int compare = valA is Comparable && valB is Comparable ? valA.compareTo(valB) : valA.toString().compareTo(valB.toString());
           return _sortAscending ? compare : -compare;
         });
       }
@@ -626,6 +596,31 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         isNowExpanded = true;
       }
       widget.onRowToggle?.call(rowId, isNowExpanded);
+    });
+  }
+
+  /// Programmatically expands the row with the given [rowId].
+  void expandRow(String rowId) {
+    setRowExpansion(rowId, true);
+  }
+
+  /// Programmatically collapses the row with the given [rowId].
+  void collapseRow(String rowId) {
+    setRowExpansion(rowId, false);
+  }
+
+  /// Programmatically sets the expansion state of the row with the given [rowId].
+  void setRowExpansion(String rowId, bool expanded) {
+    if (!mounted) return;
+    if (expanded == _expandedRowIds.contains(rowId)) return;
+
+    setState(() {
+      if (expanded) {
+        _expandedRowIds.add(rowId);
+      } else {
+        _expandedRowIds.remove(rowId);
+      }
+      widget.onRowToggle?.call(rowId, expanded);
     });
   }
 
@@ -701,14 +696,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
     // 1. Filter by 'Show Deleted'
     if (widget.showDeletedToggle) {
-      processedData = processedData
-          .where((item) => widget.isDeleted!(item) == _showDeleted)
-          .toList();
+      processedData = processedData.where((item) => widget.isDeleted!(item) == _showDeleted).toList();
     }
 
     // 2. Filter by column values
-    final activeFilters = Map.of(_filterValues)
-      ..removeWhere((_, value) => value.trim().isEmpty);
+    final activeFilters = Map.of(_filterValues)..removeWhere((_, value) => value.trim().isEmpty);
     if (activeFilters.isNotEmpty) {
       final finalColumnDefs = List.of(widget.columnDefs);
       if (widget.idColumnDef != null) {
@@ -716,20 +708,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       }
 
       if (widget.isTree) {
-        final itemMap = {
-          for (var item in processedData)
-            _extractValue(widget.toMap(item), widget.rowIdKey).toString(): item,
-        };
+        final itemMap = {for (var item in processedData) _extractValue(widget.toMap(item), widget.rowIdKey).toString(): item};
         final childrenMap = <String, List<T>>{};
         final parentMap = <String, T>{};
 
         for (final item in processedData) {
           final rowMap = widget.toMap(item);
           final id = _extractValue(rowMap, widget.rowIdKey).toString();
-          final parentId = _extractValue(
-            rowMap,
-            widget.parentIdKey!,
-          )?.toString();
+          final parentId = _extractValue(rowMap, widget.parentIdKey!)?.toString();
 
           if (parentId != null) {
             childrenMap.putIfAbsent(parentId, () => []).add(item);
@@ -744,16 +730,12 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             .where((item) {
               final rowMap = widget.toMap(item);
               return activeFilters.entries.every((filterEntry) {
-                final columnDef = finalColumnDefs.firstWhere(
-                  (c) => c.id == filterEntry.key,
-                );
+                final columnDef = finalColumnDefs.firstWhere((c) => c.id == filterEntry.key);
                 final cellValue = _extractValue(rowMap, filterEntry.key);
                 if (cellValue == null) return false;
                 switch (columnDef.filterType) {
                   case FilterType.string:
-                    return cellValue.toString().toLowerCase().contains(
-                      filterEntry.value.toLowerCase(),
-                    );
+                    return cellValue.toString().toLowerCase().contains(filterEntry.value.toLowerCase());
                   case FilterType.numeric:
                     return _matchNumericFilter(cellValue, filterEntry.value);
                   case FilterType.date:
@@ -761,8 +743,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                   case FilterType.boolean:
                     return _matchBooleanFilter(cellValue, filterEntry.value);
                   case FilterType.list:
-                    return cellValue.toString().toLowerCase() ==
-                        filterEntry.value.toLowerCase();
+                    return cellValue.toString().toLowerCase() == filterEntry.value.toLowerCase();
                   case FilterType.none:
                     return true;
                 }
@@ -777,10 +758,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
             var current = item;
             while (true) {
-              final currentId = _extractValue(
-                widget.toMap(current),
-                widget.rowIdKey,
-              ).toString();
+              final currentId = _extractValue(widget.toMap(current), widget.rowIdKey).toString();
               final parent = parentMap[currentId];
               if (parent == null) break;
               itemsToShow.add(parent);
@@ -790,10 +768,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             final queue = [item];
             while (queue.isNotEmpty) {
               final currentItem = queue.removeAt(0);
-              final currentId = _extractValue(
-                widget.toMap(currentItem),
-                widget.rowIdKey,
-              ).toString();
+              final currentId = _extractValue(widget.toMap(currentItem), widget.rowIdKey).toString();
               if (childrenMap.containsKey(currentId)) {
                 for (final child in childrenMap[currentId]!) {
                   if (itemsToShow.add(child)) {
@@ -811,16 +786,12 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         processedData = processedData.where((item) {
           final rowMap = widget.toMap(item);
           return activeFilters.entries.every((filterEntry) {
-            final columnDef = finalColumnDefs.firstWhere(
-              (c) => c.id == filterEntry.key,
-            );
+            final columnDef = finalColumnDefs.firstWhere((c) => c.id == filterEntry.key);
             final cellValue = _extractValue(rowMap, filterEntry.key);
             if (cellValue == null) return false;
             switch (columnDef.filterType) {
               case FilterType.string:
-                return cellValue.toString().toLowerCase().contains(
-                  filterEntry.value.toLowerCase(),
-                );
+                return cellValue.toString().toLowerCase().contains(filterEntry.value.toLowerCase());
               case FilterType.numeric:
                 return _matchNumericFilter(cellValue, filterEntry.value);
               case FilterType.date:
@@ -828,8 +799,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               case FilterType.boolean:
                 return _matchBooleanFilter(cellValue, filterEntry.value);
               case FilterType.list:
-                return cellValue.toString().toLowerCase() ==
-                    filterEntry.value.toLowerCase();
+                return cellValue.toString().toLowerCase() == filterEntry.value.toLowerCase();
               case FilterType.none:
                 return true;
             }
@@ -846,9 +816,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         if (valA == null && valB == null) return 0;
         if (valA == null) return 1;
         if (valB == null) return -1;
-        int compare = valA is Comparable && valB is Comparable
-            ? valA.compareTo(valB)
-            : valA.toString().compareTo(valB.toString());
+        int compare = valA is Comparable && valB is Comparable ? valA.compareTo(valB) : valA.toString().compareTo(valB.toString());
         return _sortAscending ? compare : -compare;
       });
     }
@@ -873,9 +841,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   bool _matchNumericFilter(dynamic cellValue, String filterValue) {
     final numValue = double.tryParse(cellValue.toString());
     if (numValue == null) return false;
-    final operatorMatch = RegExp(
-      r'^(>=|<=|>|<|=)?(.+)',
-    ).firstMatch(filterValue);
+    final operatorMatch = RegExp(r'^(>=|<=|>|<|=)?(.+)').firstMatch(filterValue);
     if (operatorMatch == null) return false;
     final operator = operatorMatch.group(1) ?? '=';
     final filterNum = double.tryParse(operatorMatch.group(2)!.trim());
@@ -922,41 +888,25 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   }
 
   bool _matchDateFilter(dynamic cellValue, String filterValue) {
-    DateTime? cellDate = (cellValue is DateTime)
-        ? cellValue
-        : DateTime.tryParse(cellValue.toString());
+    DateTime? cellDate = (cellValue is DateTime) ? cellValue : DateTime.tryParse(cellValue.toString());
     if (cellDate == null) return false;
-    final operatorMatch = RegExp(
-      r'^(>=|<=|>|<|=)?(.+)',
-    ).firstMatch(filterValue);
+    final operatorMatch = RegExp(r'^(>=|<=|>|<|=)?(.+)').firstMatch(filterValue);
     if (operatorMatch == null) return false;
     final operator = operatorMatch.group(1) ?? '=';
     final dateString = operatorMatch.group(2)?.trim();
-    final filterDate = dateString != null
-        ? DateTime.tryParse(dateString)
-        : null;
+    final filterDate = dateString != null ? DateTime.tryParse(dateString) : null;
     if (filterDate == null) return false;
-    final normalizedCellDate = DateTime(
-      cellDate.year,
-      cellDate.month,
-      cellDate.day,
-    );
-    final normalizedFilterDate = DateTime(
-      filterDate.year,
-      filterDate.month,
-      filterDate.day,
-    );
+    final normalizedCellDate = DateTime(cellDate.year, cellDate.month, cellDate.day);
+    final normalizedFilterDate = DateTime(filterDate.year, filterDate.month, filterDate.day);
     switch (operator) {
       case '>':
         return normalizedCellDate.isAfter(normalizedFilterDate);
       case '<':
         return normalizedCellDate.isBefore(normalizedFilterDate);
       case '>=':
-        return normalizedCellDate.isAtSameMomentAs(normalizedFilterDate) ||
-            normalizedCellDate.isAfter(normalizedFilterDate);
+        return normalizedCellDate.isAtSameMomentAs(normalizedFilterDate) || normalizedCellDate.isAfter(normalizedFilterDate);
       case '<=':
-        return normalizedCellDate.isAtSameMomentAs(normalizedFilterDate) ||
-            normalizedCellDate.isBefore(normalizedFilterDate);
+        return normalizedCellDate.isAtSameMomentAs(normalizedFilterDate) || normalizedCellDate.isBefore(normalizedFilterDate);
       default:
         return normalizedCellDate.isAtSameMomentAs(normalizedFilterDate);
     }
@@ -964,11 +914,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
   // --- ==================== UI Builders ==================== ---
 
-  Widget _buildFilterRow(
-    BuildContext context,
-    List<DataColumnDef> columns,
-    List<double> columnWidths,
-  ) {
+  Widget _buildFilterRow(BuildContext context, List<DataColumnDef> columns, List<double> columnWidths) {
     final List<Widget> filterWidgets = [];
     for (int i = 0; i < columns.length; i++) {
       final column = columns[i];
@@ -995,9 +941,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               ),
           ];
           filterWidget = DropdownButtonFormField<String>(
-            initialValue: _filterValues[column.id]?.isEmpty ?? true
-                ? 'all'
-                : _filterValues[column.id],
+            initialValue: _filterValues[column.id]?.isEmpty ?? true ? 'all' : _filterValues[column.id],
             items: items,
             onChanged: (value) {
               if (value == null) return;
@@ -1008,20 +952,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                 }
               });
             },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            ),
+            decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
           );
           break;
         case FilterType.string:
         case FilterType.numeric:
         case FilterType.date:
           if (!_filterControllers.containsKey(column.id)) {
-            final controller = TextEditingController(
-              text: _filterValues[column.id],
-            );
+            final controller = TextEditingController(text: _filterValues[column.id]);
             _filterControllers[column.id] = controller;
             controller.addListener(() {
               _filterValues[column.id] = controller.text;
@@ -1040,13 +978,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               hintText: 'Filter...',
               border: const OutlineInputBorder(),
               isDense: true,
-              prefixIcon: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  SizedBox(width: 12.0),
-                  Icon(Icons.search, size: 18),
-                ],
-              ),
+              prefixIcon: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[SizedBox(width: 12.0), Icon(Icons.search, size: 18)]),
               prefixIconConstraints: const BoxConstraints(minHeight: 36),
               suffixIcon: controller.text.isEmpty
                   ? null
@@ -1069,41 +1001,24 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
       final cell = SizedBox(
         width: columnWidths[i],
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-          child: filterWidget,
-        ),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0), child: filterWidget),
       );
 
       filterWidgets.add(cell);
 
       // Add dividers between cells, just like the header and data rows.
       if (i < columns.length - 1) {
-        final bool isDraggable =
-            widget.allowColumnResize &&
-            columns[i].resizable &&
-            columns[i + 1].resizable;
-        final divider = VerticalDivider(
-          width: isDraggable ? 10.0 : 1.0,
-          thickness: 1,
-        );
+        final bool isDraggable = widget.allowColumnResize && columns[i].resizable && columns[i + 1].resizable;
+        final divider = VerticalDivider(width: isDraggable ? 10.0 : 1.0, thickness: 1);
         filterWidgets.add(divider);
       }
     }
 
     return Container(
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerColor),
-        ),
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (widget.showCheckboxColumn) const SizedBox(width: 32.0),
-          ...filterWidgets,
-        ],
-      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [if (widget.showCheckboxColumn) const SizedBox(width: 32.0), ...filterWidgets]),
     );
   }
 
@@ -1113,10 +1028,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     if (_columnOrder != null) {
       final defsMap = {for (var def in finalColumnDefs) def.id: def};
       final order = _columnOrder!;
-      finalColumnDefs = order
-          .map((id) => defsMap[id])
-          .whereType<DataColumnDef>()
-          .toList();
+      finalColumnDefs = order.map((id) => defsMap[id]).whereType<DataColumnDef>().toList();
     }
 
     if (widget.idColumnDef != null) {
@@ -1145,9 +1057,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         _treeData = _buildTree(processedData);
         // In tree mode, we don't paginate the main list.
         // The CustomDataTable will handle showing/hiding children.
-        totalRecords = _treeData
-            .where((row) => row['_indentationLevel'] == 0)
-            .length;
+        totalRecords = _treeData.where((row) => row['_indentationLevel'] == 0).length;
         totalPages = 1; // Pagination is not really used in tree view
         _currentPage = 1;
         isFirstPage = true;
@@ -1156,16 +1066,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       } else {
         // For flat list, paginate the processed data
         totalRecords = processedData.length;
-        totalPages = totalRecords > 0
-            ? (totalRecords / widget.pageSize).ceil()
-            : 1;
+        totalPages = totalRecords > 0 ? (totalRecords / widget.pageSize).ceil() : 1;
         if (_currentPage > totalPages) {
           _currentPage = totalPages > 0 ? totalPages : 1;
         }
-        final paginatedData = processedData
-            .skip((_currentPage - 1) * widget.pageSize)
-            .take(widget.pageSize)
-            .toList();
+        final paginatedData = processedData.skip((_currentPage - 1) * widget.pageSize).take(widget.pageSize).toList();
         displayRows = paginatedData.map(widget.toMap).toList();
         isFirstPage = _currentPage == 1;
         isLastPage = _currentPage == totalPages;
@@ -1187,9 +1092,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     }
 
     final bool hasSelection = _selectedRowIds.isNotEmpty;
-    final bool actualUndeleteMode = widget.mode == DataGridMode.client
-        ? _showDeleted
-        : widget.isUndeleteMode;
+    final bool actualUndeleteMode = widget.mode == DataGridMode.client ? _showDeleted : widget.isUndeleteMode;
 
     // --- Determine "Show Deleted" state and callback for the footer ---
     bool? showDeletedValue;
@@ -1201,11 +1104,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         _showDeleted = value ?? false;
         _selectedRowIds.clear();
       });
-    } else if (widget.mode == DataGridMode.server &&
-        widget.serverShowDeletedValue != null) {
+    } else if (widget.mode == DataGridMode.server && widget.serverShowDeletedValue != null) {
       showDeletedValue = widget.serverShowDeletedValue;
-      showDeletedChangedCallback = (value) =>
-          widget.onServerShowDeletedChanged?.call(value ?? false);
+      showDeletedChangedCallback = (value) => widget.onServerShowDeletedChanged?.call(value ?? false);
     }
 
     // --- Handle Initial Column Widths from ViewState ---
@@ -1218,9 +1119,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
       // Ensure the widths are in the same order as the final columns.
       // Provide a fallback to the column's defined width if not in the map.
-      initialColumnWidths = finalColumnDefs
-          .map((c) => widthsMap[c.id] ?? c.width ?? c.minWidth)
-          .toList();
+      initialColumnWidths = finalColumnDefs.map((c) => widthsMap[c.id] ?? c.width ?? c.minWidth).toList();
 
       // When a new view is applied, we must reset the widths in CustomDataTable.
       // Setting _widthsInitialized to false in the child is not ideal, so we pass a key.
@@ -1231,8 +1130,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       headerHeight: widget.headerHeight,
       columns: finalColumnDefs,
       rowHeightBuilder: widget.rowHeightBuilder,
-      headerTrailingWidgets: widget
-          .headerTrailingWidgets, // Use displayRows for both tree and flat list
+      headerTrailingWidgets: widget.headerTrailingWidgets, // Use displayRows for both tree and flat list
       rows: displayRows, // Use displayRows for both tree and flat list
       onRowTap: widget.onRowTap,
       onSort: widget.allowSorting ? _handleSort : null,
@@ -1242,8 +1140,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       rowIdKey: widget.rowIdKey,
       rowHoverColor: widget.rowHoverColor,
       selectedRowIds: _selectedRowIds,
-      onSelectionChanged: (newSelection) =>
-          setState(() => _selectedRowIds = newSelection), // TODO: this is a bug
+      onSelectionChanged: (newSelection) => setState(() => _selectedRowIds = newSelection), // TODO: this is a bug
       allowFiltering: widget.allowFiltering,
       filterRowBuilder: widget.allowFiltering ? _buildFilterRow : null,
       allowColumnResize: widget.allowColumnResize,
@@ -1275,9 +1172,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                       Positioned.fill(
                         child: Container(
                           color: Colors.black.withValues(alpha: 0.1),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          child: const Center(child: CircularProgressIndicator()),
                         ),
                       ),
                   ],
@@ -1293,19 +1188,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                 totalPages: totalPages,
                 onRefresh: refresh,
                 onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
-                onPreviousPage: !isFirstPage
-                    ? () => _onPageChanged(_currentPage - 1)
-                    : null,
-                onNextPage: !isLastPage
-                    ? () => _onPageChanged(_currentPage + 1)
-                    : null,
-                onLastPage: !isLastPage
-                    ? () => _onPageChanged(totalPages)
-                    : null,
+                onPreviousPage: !isFirstPage ? () => _onPageChanged(_currentPage - 1) : null,
+                onNextPage: !isLastPage ? () => _onPageChanged(_currentPage + 1) : null,
+                onLastPage: !isLastPage ? () => _onPageChanged(totalPages) : null,
                 onAdd: widget.onAdd,
-                onDelete: widget.onDelete != null && hasSelection
-                    ? _handleDelete
-                    : null,
+                onDelete: widget.onDelete != null && hasSelection ? _handleDelete : null,
                 onClearFilters: _clearFilters,
                 showDeleted: showDeletedValue,
                 onShowDeletedChanged: showDeletedChangedCallback,
@@ -1320,28 +1207,18 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
               totalPages: totalPages,
               onRefresh: refresh,
               onFirstPage: !isFirstPage ? () => _onPageChanged(1) : null,
-              onPreviousPage: !isFirstPage
-                  ? () => _onPageChanged(_currentPage - 1)
-                  : null,
-              onNextPage: !isLastPage
-                  ? () => _onPageChanged(_currentPage + 1)
-                  : null,
+              onPreviousPage: !isFirstPage ? () => _onPageChanged(_currentPage - 1) : null,
+              onNextPage: !isLastPage ? () => _onPageChanged(_currentPage + 1) : null,
               onLastPage: !isLastPage ? () => _onPageChanged(totalPages) : null,
               onAdd: widget.onAdd,
-              onDelete: widget.onDelete != null && hasSelection
-                  ? _handleDelete
-                  : null,
+              onDelete: widget.onDelete != null && hasSelection ? _handleDelete : null,
               onClearFilters: _clearFilters,
               showDeleted: showDeletedValue,
               onShowDeletedChanged: showDeletedChangedCallback,
               isUndeleteMode: actualUndeleteMode,
               leadingWidgets: widget.footerLeadingWidgets,
-              includeChildrenInFilter:
-                  widget.isTree && widget.allowIncludeChildrenInFilterToggle
-                  ? _includeChildrenInFilter
-                  : null,
-              onIncludeChildrenInFilterChanged:
-                  widget.isTree && widget.allowIncludeChildrenInFilterToggle
+              includeChildrenInFilter: widget.isTree && widget.allowIncludeChildrenInFilterToggle ? _includeChildrenInFilter : null,
+              onIncludeChildrenInFilterChanged: widget.isTree && widget.allowIncludeChildrenInFilterToggle
                   ? (value) => setState(() {
                       _includeChildrenInFilter = value ?? false;
                     })

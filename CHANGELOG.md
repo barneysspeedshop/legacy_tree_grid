@@ -1,3 +1,8 @@
+## 0.10.0
+
+* **FEATURE**: Add `expandRow` and `collapseRow` methods to the UnifiedDataGridState to allow programmatic expansion and collapse of rows.
+* **FEATURE**: Add `setRowExpansion` method to the UnifiedDataGridState to allow programmatic expansion and collapse of rows.
+
 ## 0.9.1
 
 * **FIX**: Fix for an issue that caused the `selectedRowId` to fail to propagate to the selected row in Unified Data Grid.
