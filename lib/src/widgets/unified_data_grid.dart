@@ -298,7 +298,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
     _expandedRowIds = widget.initialExpandedRowIds ?? {};
     _showDeleted = false;
-    _selectedRowIds = widget.selectedRowId != null ? {widget.selectedRowId!} : {};
+    _selectedRowIds = widget.selectedRowId != null
+        ? {widget.selectedRowId!}
+        : {};
 
     if (widget.initialViewState != null) {
       _applyInitialViewState(widget.initialViewState!);
@@ -344,8 +346,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
     if (widget.selectedRowId != oldWidget.selectedRowId) {
       setState(() {
-        _selectedRowIds =
-            widget.selectedRowId != null ? {widget.selectedRowId!} : {};
+        _selectedRowIds = widget.selectedRowId != null
+            ? {widget.selectedRowId!}
+            : {};
       });
     }
     if (widget.mode == DataGridMode.client) {
@@ -1226,7 +1229,8 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       headerHeight: widget.headerHeight,
       columns: finalColumnDefs,
       rowHeightBuilder: widget.rowHeightBuilder,
-      headerTrailingWidgets: widget.headerTrailingWidgets, // Use displayRows for both tree and flat list
+      headerTrailingWidgets: widget
+          .headerTrailingWidgets, // Use displayRows for both tree and flat list
       rows: displayRows, // Use displayRows for both tree and flat list
       onRowTap: widget.onRowTap,
       onSort: widget.allowSorting ? _handleSort : null,
