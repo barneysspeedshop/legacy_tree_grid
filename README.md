@@ -1,5 +1,5 @@
 [![Pub Version](https://img.shields.io/pub/v/legacy_tree_grid)](https://pub.dev/packages/legacy_tree_grid)
-![](https://img.shields.io/badge/coverage-36%25-red)
+![](https://img.shields.io/badge/coverage-43%25-red)
 [![Live Demo](https://img.shields.io/badge/live-demo-brightgreen)](https://barneysspeedshop.github.io/legacy_tree_grid/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
