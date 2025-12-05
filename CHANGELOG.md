@@ -1,3 +1,7 @@
+## 0.9.1
+
+* **FIX**: Fix for an issue that caused the `selectedRowId` to fail to propagate to the selected row in Unified Data Grid.
+
 ## 0.9.0
 
 * **FEATURE**: Add `selectedRowId` so you can programmatically select a row in the Unified Data Grid.

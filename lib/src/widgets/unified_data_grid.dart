@@ -314,7 +314,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       if (widget.clientFetch != null) {
         _refreshClientData();
       } else {
-        _setDataFromWidget();
+        _setDataFromWidget(clearSelection: false);
       }
     } else {
       _fetchDataFromServer();
@@ -437,12 +437,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   }
 
   // --- Client-Mode Data ---
-  void _setDataFromWidget() {
+  void _setDataFromWidget({bool clearSelection = true}) {
     setState(() {
       _isLoading = false;
       _allData = widget.clientData ?? [];
       _currentPage = 1;
-      _selectedRowIds.clear();
+      if (clearSelection) {
+        _selectedRowIds.clear();
+      }
     });
   }
 

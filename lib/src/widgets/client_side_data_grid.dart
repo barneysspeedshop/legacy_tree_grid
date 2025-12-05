@@ -34,6 +34,7 @@ class ClientSideDataGrid<T> extends StatefulWidget {
   final bool allowColumnResize;
   final String? initialSortColumnId;
   final bool initialSortAscending;
+  final String? selectedRowId;
 
   const ClientSideDataGrid({
     super.key,
@@ -54,6 +55,7 @@ class ClientSideDataGrid<T> extends StatefulWidget {
     this.allowColumnResize = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
+    this.selectedRowId,
   }) : assert(
          (fetchData != null && data == null) ||
              (fetchData == null && data != null),
@@ -109,6 +111,7 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
       // Client-specific properties
       showDeletedToggle: widget.showDeletedToggle,
       isDeleted: widget.isDeleted,
+      selectedRowId: widget.selectedRowId,
     );
   }
 }

@@ -502,7 +502,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
       columnWidths: _columnWidths,
       rowId: rowId,
       isHovered: _hoveredRowId == rowId,
-      isSelected: _selectedRowId == rowId,
+      isSelected:
+          _selectedRowId == rowId ||
+          (widget.selectedRowIds?.contains(rowId) ?? false),
       onHover: (hovering) {
         if (!mounted) return;
         setState(() {
