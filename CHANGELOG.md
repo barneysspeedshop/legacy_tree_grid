@@ -1,3 +1,7 @@
+## 0.11.0
+
+* **FEATURE**: Add `isExpandedKey` for more capabilities associated with programmatic expansion.
+
 ## 0.10.0
 
 * **FEATURE**: Add `expandRow` and `collapseRow` methods to the UnifiedDataGridState to allow programmatic expansion and collapse of rows.

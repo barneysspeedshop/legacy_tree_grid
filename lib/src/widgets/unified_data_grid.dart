@@ -166,6 +166,9 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// A set of row IDs that should be initially expanded when the grid is in tree mode.
   final Set<String>? initialExpandedRowIds;
 
+  /// Optional key to control expansion state via data.
+  final String? isExpandedKey;
+
   /// A callback function that is invoked when a row's expansion state is toggled in tree mode.
   final void Function(String rowId, bool isExpanded)? onRowToggle;
 
@@ -230,6 +233,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.rootValue,
     this.initialExpandedRowIds,
     this.onRowToggle,
+    this.isExpandedKey, // Add this
     this.rowHoverColor,
     this.headerHeight = 56.0,
     this.initialViewState,
@@ -421,6 +425,21 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     setState(() {
       _isLoading = false;
       _allData = widget.clientData ?? [];
+
+      // Sync expansion state if key is provided
+      if (widget.isExpandedKey != null && widget.isTree) {
+        for (var item in _allData) {
+          final map = widget.toMap(item);
+          final id = _extractValue(map, widget.rowIdKey).toString();
+          final isExpanded = _extractValue(map, widget.isExpandedKey!);
+          if (isExpanded == true) {
+            _expandedRowIds.add(id);
+          } else if (isExpanded == false) {
+            _expandedRowIds.remove(id);
+          }
+        }
+      }
+
       _currentPage = 1;
       if (clearSelection) {
         _selectedRowIds.clear();
