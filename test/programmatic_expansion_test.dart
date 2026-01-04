@@ -19,7 +19,9 @@ void main() {
     TestNode(id: '2.1', parentId: '2', name: 'Child 2.1'),
   ];
 
-  testWidgets('Programmatic expansion works correctly', (WidgetTester tester) async {
+  testWidgets('Programmatic expansion works correctly', (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -36,9 +38,20 @@ void main() {
             clientData: testData,
             isTree: true,
             parentIdKey: 'parentId',
-            toMap: (node) => {'id': node.id, 'parentId': node.parentId, 'name': node.name},
+            toMap: (node) => {
+              'id': node.id,
+              'parentId': node.parentId,
+              'name': node.name,
+            },
             rowIdKey: 'id',
-            columnDefs: [DataColumnDef(id: 'name', caption: 'Name', isNameColumn: true, minWidth: 100)],
+            columnDefs: [
+              DataColumnDef(
+                id: 'name',
+                caption: 'Name',
+                isNameColumn: true,
+                minWidth: 100,
+              ),
+            ],
           ),
         ),
       ),
