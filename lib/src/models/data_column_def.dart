@@ -76,6 +76,11 @@ class DataColumnDef {
   /// Defaults to `true`.
   final bool resizable;
 
+  /// Whether this column acts as a drag handle for reordering rows.
+  /// Only effective if `CustomDataTable.onReorder` is provided.
+  /// Defaults to `false`.
+  final bool isDragHandle;
+
   /// An optional builder for creating context menu items for a row.
   /// If provided, this will be used to show a context menu on secondary-click/long-press.
   final List<ContextMenuItem> Function(
@@ -101,6 +106,7 @@ class DataColumnDef {
     this.formattedValue,
     this.showOnRowHover = false,
     this.resizable = true,
+    this.isDragHandle = false,
     this.itemsBuilder,
   }) : alignment =
            alignment ??

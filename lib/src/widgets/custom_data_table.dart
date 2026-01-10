@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:legacy_tree_grid/src/utils/color_utils.dart';
 import 'package:legacy_tree_grid/src/models/data_column_def.dart';
@@ -140,6 +141,10 @@ class CustomDataTable extends StatefulWidget {
   /// An optional widget to display for an expanded tree node.
   /// Defaults to a Material `Icons.expand_more`.
   final Widget? treeIconExpanded;
+
+  /// An optional callback when a row is reordered.
+  final void Function(int oldIndex, int newIndex)? onReorder;
+
   const CustomDataTable({
     super.key,
     required this.columns,
@@ -178,6 +183,7 @@ class CustomDataTable extends StatefulWidget {
     this.treeIconExpanded,
     this.rowHeightBuilder,
     this.headerTrailingWidgets,
+    this.onReorder,
   }) : assert(
          !showCheckboxColumn ||
              (rowIdKey != null &&
@@ -475,6 +481,44 @@ class _CustomDataTableState extends State<CustomDataTable> {
     return const SizedBox.shrink();
   }
 
+  Widget _buildDragProxy(
+    BuildContext context,
+    Widget? originalChild,
+    int index,
+  ) {
+    if (originalChild == null) return const SizedBox.shrink();
+    if (!widget.isTree || index >= widget.rows.length) return originalChild;
+
+    final rowData = widget.rows[index];
+    final isExpanded = rowData[widget.isExpandedKey] as bool? ?? false;
+
+    // If not expanded, we just drag the single row
+    if (!isExpanded) return originalChild;
+
+    // It is expanded. Find children to inspect.
+    final parentIndent = rowData[widget.indentationLevelKey] as int? ?? 0;
+    List<Widget> childrenWidgets = [];
+
+    // Scan forward to find children
+    for (int i = index + 1; i < widget.rows.length; i++) {
+      final nextRow = widget.rows[i];
+      final nextIndent = nextRow[widget.indentationLevelKey] as int? ?? 0;
+      if (nextIndent <= parentIndent) break; // End of block
+
+      // Build the child row
+      childrenWidgets.add(_buildRow(context, nextRow, i));
+    }
+
+    if (childrenWidgets.isEmpty) return originalChild;
+
+    // Return a column of Parent + Children
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [originalChild, ...childrenWidgets],
+    );
+  }
+
   void _handleRowTap(Map<String, dynamic> rowData) {
     final rowId = _extractValue(rowData, widget.rowIdKey!).toString();
     setState(() {
@@ -487,7 +531,11 @@ class _CustomDataTableState extends State<CustomDataTable> {
     widget.onRowTap?.call(rowData); // Also call the external listener
   }
 
-  Widget _buildRow(BuildContext context, Map<String, dynamic> rowData) {
+  Widget _buildRow(
+    BuildContext context,
+    Map<String, dynamic> rowData,
+    int index,
+  ) {
     if (widget.rowBuilder != null) {
       return widget.rowBuilder!(context, rowData, widget.columns);
     }
@@ -529,6 +577,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
       rowIdKey: widget.rowIdKey!,
       treeIconCollapsed: widget.treeIconCollapsed,
       treeIconExpanded: widget.treeIconExpanded, // scale was duplicated here
+      index: index,
     );
   }
 
@@ -587,12 +636,56 @@ class _CustomDataTableState extends State<CustomDataTable> {
                     ),
                   ),
                 ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildRow(context, widget.rows[index]),
-                  childCount: widget.rows.length,
+              if (widget.onReorder != null)
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 60),
+                  sliver: SliverReorderableList(
+                    itemBuilder: (context, index) {
+                      final rowData = widget.rows[index];
+                      final rowId = _extractValue(
+                        rowData,
+                        widget.rowIdKey!,
+                      ).toString();
+                      return KeyedSubtree(
+                        key: ValueKey(rowId),
+                        child: _buildRow(context, rowData, index),
+                      );
+                    },
+                    itemCount: widget.rows.length,
+                    onReorder: widget.onReorder!,
+                    proxyDecorator: (child, index, animation) {
+                      return AnimatedBuilder(
+                        animation: animation,
+                        builder: (BuildContext context, Widget? child) {
+                          final double animValue = Curves.easeInOut.transform(
+                            animation.value,
+                          );
+                          final double elevation =
+                              lerpDouble(0, 6, animValue) ?? 0;
+                          return Material(
+                            elevation: elevation,
+                            color: Colors
+                                .transparent, // Let row color shine through
+                            shadowColor: Colors.black38,
+                            child: child ?? const SizedBox.shrink(),
+                          );
+                        },
+                        child: _buildDragProxy(context, child, index),
+                      );
+                    },
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 60),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) =>
+                          _buildRow(context, widget.rows[index], index),
+                      childCount: widget.rows.length,
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         );
@@ -655,6 +748,7 @@ class _DataTableRow extends StatelessWidget {
   final bool allowColumnResize;
   final Widget? treeIconCollapsed;
   final Widget? treeIconExpanded;
+  final int index;
 
   const _DataTableRow({
     required this.rowData,
@@ -682,6 +776,7 @@ class _DataTableRow extends StatelessWidget {
     required this.allowColumnResize,
     this.treeIconCollapsed,
     this.treeIconExpanded,
+    required this.index,
   });
 
   Widget _buildRowCheckbox() {
@@ -798,8 +893,8 @@ class _DataTableRow extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (showCheckboxColumn) _buildRowCheckbox(),
-                            ...List.generate(columns.length, (index) {
-                              final column = columns[index];
+                            ...List.generate(columns.length, (colIndex) {
+                              final column = columns[colIndex];
                               String displayValue;
                               if (column.formattedValue != null) {
                                 displayValue = column.formattedValue!(rowData);
@@ -862,6 +957,15 @@ class _DataTableRow extends StatelessWidget {
                                 );
                               }
 
+                              // Check if this column is a drag handle and wrap it
+                              if (column.isDragHandle) {
+                                // Use the outer 'index' (rowIndex) for the drag listener
+                                cellContent = ReorderableDragStartListener(
+                                  index: index,
+                                  child: cellContent,
+                                );
+                              }
+
                               if (isTree && column.isNameColumn) {
                                 final int indentation =
                                     rowData[indentationLevelKey] as int? ?? 0;
@@ -907,15 +1011,15 @@ class _DataTableRow extends StatelessWidget {
                               }
 
                               final cell = SizedBox(
-                                width: columnWidths[index],
+                                width: columnWidths[colIndex],
                                 child: cellContent,
                               );
 
-                              if (index < columns.length - 1) {
+                              if (colIndex < columns.length - 1) {
                                 final bool isDraggable =
                                     allowColumnResize &&
-                                    columns[index].resizable &&
-                                    columns[index + 1].resizable;
+                                    columns[colIndex].resizable &&
+                                    columns[colIndex + 1].resizable;
 
                                 final divider = VerticalDivider(
                                   width: isDraggable ? 10.0 : 1.0,

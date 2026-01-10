@@ -197,6 +197,9 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// An optional ID of a row to be programmatically selected.
   final String? selectedRowId;
 
+  /// An optional callback when a row is reordered.
+  final void Function(int oldIndex, int newIndex)? onReorder;
+
   const UnifiedDataGrid({
     super.key,
     required this.mode,
@@ -243,6 +246,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.headerTrailingWidgets,
     this.scrollController,
     this.selectedRowId,
+    this.onReorder,
   }) : assert(
          (mode == DataGridMode.client &&
                  (clientData != null || clientFetch != null)) ||
@@ -1299,12 +1303,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       isEffectivelyVisibleKey: '_isEffectivelyVisible',
       initialColumnWidths: initialColumnWidths,
       onColumnWidthsChanged: (newWidths) {
-        if (mounted) {
-          setState(() {
-            _columnWidths = newWidths;
-          });
-        }
+        _columnWidths = newWidths;
       },
+      onReorder: widget.onReorder,
     );
 
     return Column(

@@ -1,3 +1,10 @@
+## 0.12.0
+
+* **FEATURE**: Added support for drag-and-drop row reordering.
+  * Added `onReorder` callback to `UnifiedDataGrid` and `CustomDataTable`.
+  * Added `isDragHandle` property to `DataColumnDef` to designate specific columns as drag handles.
+  * Implemented smart drag proxy generation to visually drag entire subtrees when reordering expanded parent nodes.
+
 ## 0.11.0
 
 * **FEATURE**: Add `isExpandedKey` for more capabilities associated with programmatic expansion.
