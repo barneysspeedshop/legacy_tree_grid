@@ -1,3 +1,7 @@
+## 0.13.1
+
+* **FIX**: Fix for an issue that prevented header alignment from being applied.
+
 ## 0.13.0
 
 * **FEATURE**: Dynamic Grid Control Panel for testing different configurations in the example application.

@@ -1191,6 +1191,7 @@ class _DataTableRow extends StatelessWidget {
                                           ) ??
                                           Text(
                                             displayValue,
+                                            textAlign: column.alignment,
                                             overflow: TextOverflow.ellipsis,
                                             style:
                                                 (Theme.of(context)
@@ -1239,6 +1240,7 @@ class _DataTableRow extends StatelessWidget {
                                       ),
                                       child: Text(
                                         displayValue,
+                                        textAlign: column.alignment,
                                         overflow: TextOverflow.ellipsis,
                                         style:
                                             (Theme.of(
@@ -1465,6 +1467,7 @@ class _DataTableHeader extends StatelessWidget {
 
             final headerText = Text(
               column.caption,
+              textAlign: column.headerAlignment,
               style:
                   (Theme.of(context).textTheme.titleSmall ??
                           TextStyle(fontSize: 14.0 * scale))
