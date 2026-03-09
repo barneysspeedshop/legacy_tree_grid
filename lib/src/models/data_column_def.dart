@@ -32,10 +32,15 @@ class DataColumnDef {
   /// Defaults to 50.0.
   final double minWidth;
 
+  /// The maximum width this column is allowed to be.
+  /// If provided, the column will not expand beyond this width.
+  final double? maxWidth;
+
   /// The alignment of the content within the column. Defaults to `TextAlign.left`.
   /// If not specified, it will automatically be set to `TextAlign.right` for
   /// columns with `filterType` of `FilterType.numeric`.
   final TextAlign alignment;
+  final TextAlign headerAlignment;
 
   /// Whether this column can be sorted. Defaults to `true`.
   final bool sortable;
@@ -51,6 +56,9 @@ class DataColumnDef {
 
   /// For `FilterType.list`, this provides the dropdown options.
   final List<String>? filterOptions;
+
+  /// For `FilterType.list`, this provides mapped dropdown options (value -> label).
+  final Map<String, String>? filterOptionsMap;
 
   /// The type of filter to use for this column. Defaults to `none`.
   final FilterType filterType;
@@ -81,6 +89,10 @@ class DataColumnDef {
   /// Defaults to `false`.
   final bool isDragHandle;
 
+  /// Whether to use the default cell padding defined in the data table.
+  /// Defaults to `true`.
+  final bool useCellPadding;
+
   /// An optional builder for creating context menu items for a row.
   /// If provided, this will be used to show a context menu on secondary-click/long-press.
   final List<ContextMenuItem> Function(
@@ -96,27 +108,38 @@ class DataColumnDef {
     this.width,
     this.widthFactor = 1.0,
     required this.minWidth,
+    this.maxWidth,
     TextAlign? alignment,
+    TextAlign? headerAlignment,
     this.sortable = true,
     this.sortDescendingFirst = false,
     this.cellBuilder,
     this.filterOptions,
+    this.filterOptionsMap,
     this.filterType = FilterType.none,
     this.isNameColumn = false,
     this.formattedValue,
     this.showOnRowHover = false,
     this.resizable = true,
     this.isDragHandle = false,
+    this.useCellPadding = true,
     this.itemsBuilder,
   }) : alignment =
            alignment ??
            (filterType == FilterType.numeric
                ? TextAlign.right
                : TextAlign.left),
+       headerAlignment =
+           headerAlignment ??
+           alignment ??
+           (filterType == FilterType.numeric
+               ? TextAlign.right
+               : TextAlign.left),
        assert(
          filterType != FilterType.list ||
-             (filterOptions != null && filterOptions.isNotEmpty),
-         'If filterType is list, filterOptions must be provided and not empty.',
+             (filterOptions != null && filterOptions.isNotEmpty) ||
+             (filterOptionsMap != null && filterOptionsMap.isNotEmpty),
+         'If filterType is list, either filterOptions or filterOptionsMap must be provided and not empty.',
        );
 
   /// A factory for creating a standard, non-resizable "Actions" column.
@@ -144,6 +167,7 @@ class DataColumnDef {
       sortable: false, // Actions columns are not sortable.
       alignment: TextAlign.center,
       showOnRowHover: showOnRowHover,
+      useCellPadding: false,
       itemsBuilder: itemsBuilder,
       cellBuilder: (context, rowData) {
         if (itemsBuilder == null) return null;
@@ -182,6 +206,38 @@ class DataColumnDef {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  /// A factory for creating a standard "Drag Handle" column.
+  ///
+  /// This provides a consistent "vertical grip" column with a fixed width
+  /// of 30.0px, non-resizable and non-sortable.
+  factory DataColumnDef.dragHandle({
+    String id = 'drag_handle',
+    String caption = '',
+    double width = 30.0,
+    Widget? icon,
+  }) {
+    return DataColumnDef(
+      id: id,
+      caption: caption,
+      width: width,
+      minWidth: width,
+      maxWidth: width,
+      resizable: false,
+      sortable: false,
+      isDragHandle: true,
+      showOnRowHover: true,
+      useCellPadding: false,
+      alignment: TextAlign.center,
+      cellBuilder: (context, rowData) {
+        return Icon(
+          Icons.drag_indicator,
+          size: 20.0,
+          color: Theme.of(context).disabledColor,
         );
       },
     );

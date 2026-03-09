@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 class ScaleNotifier extends ChangeNotifier {
-  double _scale = 1.0;
+  double _scale = 0.85;
   static const double _minScale = 0.5;
   static const double _maxScale = 2.0; // Adjust max scale as needed
   static const double _scaleIncrement = 0.1;
@@ -29,7 +29,7 @@ class ScaleNotifier extends ChangeNotifier {
   }
 
   void resetZoom() {
-    _scale = 1.0;
+    _scale = 0.85;
     notifyListeners();
   }
 }

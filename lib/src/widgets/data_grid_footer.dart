@@ -259,14 +259,13 @@ class _DataGridFooterState extends State<DataGridFooter> {
 
     // --- Build the list of actions based on the configured order ---
     final Map<FooterActionType, _FooterAction> actionsMap = {
-      if (addAction != null) FooterActionType.add: addAction,
-      if (deleteAction != null) FooterActionType.delete: deleteAction,
-      if (clearFiltersAction != null)
-        FooterActionType.clearFilters: clearFiltersAction,
-      if (firstPageAction != null) FooterActionType.firstPage: firstPageAction,
-      if (prevPageAction != null) FooterActionType.previousPage: prevPageAction,
-      if (nextPageAction != null) FooterActionType.nextPage: nextPageAction,
-      if (lastPageAction != null) FooterActionType.lastPage: lastPageAction,
+      FooterActionType.add: ?addAction,
+      FooterActionType.delete: ?deleteAction,
+      FooterActionType.clearFilters: ?clearFiltersAction,
+      FooterActionType.firstPage: ?firstPageAction,
+      FooterActionType.previousPage: ?prevPageAction,
+      FooterActionType.nextPage: ?nextPageAction,
+      FooterActionType.lastPage: ?lastPageAction,
       FooterActionType.refresh: refreshAction,
     };
 
@@ -474,7 +473,7 @@ class _DataGridFooterState extends State<DataGridFooter> {
                     visibleIconsSet.contains(prevPageAction))
                   _buildIconButton(prevPageAction, scaledIconSize, iconColor),
 
-                if (pageTextWidget != null) pageTextWidget,
+                ?pageTextWidget,
 
                 if (nextPageAction != null &&
                     visibleIconsSet.contains(nextPageAction))

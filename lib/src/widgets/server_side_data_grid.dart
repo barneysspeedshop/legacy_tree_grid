@@ -24,7 +24,10 @@ class ServerSideDataGrid<T> extends StatefulWidget {
   final VoidCallback? onAdd;
   final Future<void> Function(Set<String> selectedIds)? onDelete;
   final void Function(Map<String, dynamic> rowData)? onRowTap;
+  final void Function(Map<String, dynamic> rowData)? onRowDoubleTap;
   final bool showCheckboxColumn;
+  final Set<String>? selectedRowIds;
+  final ValueChanged<Set<String>>? onSelectionChanged;
   final List<WidgetBuilder>? footerLeadingWidgets;
   final bool allowColumnResize;
   final String? initialSortColumnId;
@@ -32,6 +35,22 @@ class ServerSideDataGrid<T> extends StatefulWidget {
   final bool isUndeleteMode;
   final bool? serverShowDeletedValue;
   final ValueChanged<bool>? onServerShowDeletedChanged;
+  final double dataRowHeight;
+  final double? filterRowHeight;
+  final double headerHeight;
+  final bool allowFiltering;
+  final bool showFilterCellBorder;
+  final TableBorder? border;
+  final Widget? treeIconExpanded;
+  final Widget? treeIconCollapsed;
+  final bool isTree;
+  final String? parentIdKey;
+  final dynamic rootValue;
+  final Set<String>? initialExpandedRowIds;
+  final String? isExpandedKey;
+  final void Function(String rowId, bool isExpanded)? onRowToggle;
+  final double scale;
+  final bool useAvailableWidthDistribution;
 
   const ServerSideDataGrid({
     super.key,
@@ -44,7 +63,10 @@ class ServerSideDataGrid<T> extends StatefulWidget {
     this.onAdd,
     this.onDelete,
     this.onRowTap,
+    this.onRowDoubleTap,
     this.showCheckboxColumn = false,
+    this.selectedRowIds,
+    this.onSelectionChanged,
     this.footerLeadingWidgets,
     this.allowColumnResize = true,
     this.initialSortColumnId,
@@ -52,6 +74,22 @@ class ServerSideDataGrid<T> extends StatefulWidget {
     this.isUndeleteMode = false,
     this.serverShowDeletedValue,
     this.onServerShowDeletedChanged,
+    this.dataRowHeight = 56.0,
+    this.filterRowHeight,
+    this.headerHeight = 56.0,
+    this.allowFiltering = true,
+    this.showFilterCellBorder = true,
+    this.border,
+    this.treeIconExpanded,
+    this.treeIconCollapsed,
+    this.isTree = false,
+    this.parentIdKey,
+    this.rootValue,
+    this.initialExpandedRowIds,
+    this.isExpandedKey,
+    this.onRowToggle,
+    this.scale = 1.0,
+    this.useAvailableWidthDistribution = false,
   });
 
   @override
@@ -84,7 +122,10 @@ class ServerSideDataGridState<T> extends State<ServerSideDataGrid<T>> {
       onAdd: widget.onAdd,
       onDelete: widget.onDelete,
       onRowTap: widget.onRowTap,
+      onRowDoubleTap: widget.onRowDoubleTap,
       showCheckboxColumn: widget.showCheckboxColumn,
+      selectedRowIds: widget.selectedRowIds,
+      onSelectionChanged: widget.onSelectionChanged,
       footerLeadingWidgets: widget.footerLeadingWidgets,
       allowColumnResize: widget.allowColumnResize,
       initialSortColumnId: widget.initialSortColumnId,
@@ -92,6 +133,22 @@ class ServerSideDataGridState<T> extends State<ServerSideDataGrid<T>> {
       isUndeleteMode: widget.isUndeleteMode,
       serverShowDeletedValue: widget.serverShowDeletedValue,
       onServerShowDeletedChanged: widget.onServerShowDeletedChanged,
+      dataRowHeight: widget.dataRowHeight,
+      filterRowHeight: widget.filterRowHeight,
+      headerHeight: widget.headerHeight,
+      allowFiltering: widget.allowFiltering,
+      showFilterCellBorder: widget.showFilterCellBorder,
+      border: widget.border,
+      treeIconExpanded: widget.treeIconExpanded,
+      treeIconCollapsed: widget.treeIconCollapsed,
+      isTree: widget.isTree,
+      parentIdKey: widget.parentIdKey,
+      rootValue: widget.rootValue,
+      initialExpandedRowIds: widget.initialExpandedRowIds,
+      isExpandedKey: widget.isExpandedKey,
+      onRowToggle: widget.onRowToggle,
+      scale: widget.scale,
+      useAvailableWidthDistribution: widget.useAvailableWidthDistribution,
     );
   }
 }

@@ -28,13 +28,33 @@ class ClientSideDataGrid<T> extends StatefulWidget {
   final VoidCallback? onAdd;
   final Future<void> Function(Set<String> selectedIds)? onDelete;
   final void Function(Map<String, dynamic> rowData)? onRowTap;
+  final void Function(Map<String, dynamic> rowData)? onRowDoubleTap;
   final bool showCheckboxColumn;
   final bool showDeletedToggle;
+  final bool showDeleted;
+  final ValueChanged<bool?>? onShowDeletedChanged;
   final bool allowFiltering;
   final bool allowColumnResize;
   final String? initialSortColumnId;
   final bool initialSortAscending;
-  final String? selectedRowId;
+  final bool isTree;
+  final String? parentIdKey;
+  final Widget? treeIconExpanded;
+  final Widget? treeIconCollapsed;
+  final Set<String>? initialExpandedRowIds;
+  final Set<String>? selectedRowIds;
+  final ValueChanged<Set<String>>? onSelectionChanged;
+  final String? selectedRowId; // Re-added field
+  final void Function(int oldIndex, int newIndex)? onReorder; // Add this
+  final List<WidgetBuilder>? footerLeadingWidgets;
+  final bool showFooter;
+  final double scale;
+  final double dataRowHeight;
+  final double headerHeight;
+  final double? filterRowHeight;
+  final bool showFilterCellBorder;
+  final TableBorder? border;
+  final bool useAvailableWidthDistribution;
 
   const ClientSideDataGrid({
     super.key,
@@ -49,13 +69,33 @@ class ClientSideDataGrid<T> extends StatefulWidget {
     this.onAdd,
     this.onDelete,
     this.onRowTap,
+    this.onRowDoubleTap,
     this.showCheckboxColumn = false,
     this.showDeletedToggle = false,
+    this.showDeleted = false,
+    this.onShowDeletedChanged,
     this.allowFiltering = true,
+    this.scale = 1.0,
+    this.dataRowHeight = 32.0,
     this.allowColumnResize = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
-    this.selectedRowId,
+    this.selectedRowId, // Keep for backward compatibility
+    this.isTree = false,
+    this.parentIdKey,
+    this.treeIconExpanded,
+    this.treeIconCollapsed,
+    this.initialExpandedRowIds,
+    this.selectedRowIds,
+    this.onSelectionChanged,
+    this.onReorder, // Add this
+    this.footerLeadingWidgets,
+    this.showFooter = true,
+    this.headerHeight = 56.0,
+    this.filterRowHeight,
+    this.showFilterCellBorder = true,
+    this.border,
+    this.useAvailableWidthDistribution = false,
   }) : assert(
          (fetchData != null && data == null) ||
              (fetchData == null && data != null),
@@ -64,6 +104,10 @@ class ClientSideDataGrid<T> extends StatefulWidget {
        assert(
          !showDeletedToggle || isDeleted != null,
          'The `isDeleted` function must be provided if `showDeletedToggle` is true.',
+       ),
+       assert(
+         !isTree || parentIdKey != null,
+         'If `isTree` is true, `parentIdKey` must be provided.',
        );
 
   @override
@@ -100,9 +144,10 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
       rowIdKey: widget.rowIdKey,
       pageSize: widget.pageSize,
       idColumnDef: widget.idColumnDef,
-      onAdd: widget.onAdd,
+      onAdd: widget.onAdd, // UnifiedDataGrid handles formatting
       onDelete: widget.onDelete,
       onRowTap: widget.onRowTap,
+      onRowDoubleTap: widget.onRowDoubleTap,
       showCheckboxColumn: widget.showCheckboxColumn,
       allowFiltering: widget.allowFiltering,
       allowColumnResize: widget.allowColumnResize,
@@ -110,8 +155,30 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
       initialSortAscending: widget.initialSortAscending,
       // Client-specific properties
       showDeletedToggle: widget.showDeletedToggle,
+      showDeleted: widget.showDeleted,
+      onShowDeletedChanged: widget.onShowDeletedChanged,
       isDeleted: widget.isDeleted,
-      selectedRowId: widget.selectedRowId,
+      selectedRowIds: widget.selectedRowIds,
+      selectedRowId: widget.selectedRowIds == null
+          ? widget.selectedRowId
+          : null,
+      onReorder: widget.onReorder,
+      // Tree & Selection properties
+      isTree: widget.isTree,
+      parentIdKey: widget.parentIdKey,
+      treeIconExpanded: widget.treeIconExpanded,
+      treeIconCollapsed: widget.treeIconCollapsed,
+      initialExpandedRowIds: widget.initialExpandedRowIds,
+      onSelectionChanged: widget.onSelectionChanged,
+      footerLeadingWidgets: widget.footerLeadingWidgets,
+      showFooter: widget.showFooter,
+      scale: widget.scale,
+      dataRowHeight: widget.dataRowHeight,
+      headerHeight: widget.headerHeight,
+      filterRowHeight: widget.filterRowHeight,
+      showFilterCellBorder: widget.showFilterCellBorder,
+      border: widget.border,
+      useAvailableWidthDistribution: widget.useAvailableWidthDistribution,
     );
   }
 }

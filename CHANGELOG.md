@@ -1,3 +1,20 @@
+## 0.13.0
+
+* **FEATURE**: Dynamic Grid Control Panel for testing different configurations in the example application.
+* **FEATURE**: Smarter Column Layout System combining flexible proportional layouts with minWidth/maxWidth/fixed constraints, including logic to absorb horizontal space via `useAvailableWidthDistribution`.
+* **FEATURE**: Added `DataColumnDef.dragHandle()` factory for drag-and-drop row reordering.
+* **FEATURE**: Expanded `DataColumnDef` with `maxWidth`, `headerAlignment`, `filterOptionsMap`, and `useCellPadding`.
+* **FEATURE**: Unified Pinned Headers and Filter row into a single `SliverPersistentHeader` to ensure consistent overlapping limits and borders.
+* **FEATURE**: Added an interlocking global "Select All" tri-state checkbox directly to the header when multi-selection checkboxes are enabled. Added `selectedRowIds` and `onSelectionChanged` properties strictly at the wrapper level.
+* **FEATURE**: Introduced an `onRowDoubleTap` callback for double-click behavior.
+* **FEATURE**: Implemented `treeIconCollapsed` and `treeIconExpanded` options for custom tree parent node expansion icons.
+* **FEATURE**: Added `footerLeadingWidgets` property to trailing footer actions, along with `filterRowHeight` and `showFilterCellBorder` options.
+* **FIX**: Decreased the default `ScaleNotifier` zoom factor from `1.0` to `0.85` for a higher-density base widget size.
+* **FIX**: Optimized bounds-checking logic inside `CustomDataTable` to avoid redundant column rescans when scaling or constraints don't force a wrap.
+* **FIX**: Improved grid layout performance by flattening the row iteration tree in `CustomDataTable` during build to reduce inner memory allocations.
+* **FIX**: Transferred mock tree data logic in the example app to local state, fixing the expand/collapse behaviors effectively.
+* **FIX**: Added `noDataMessage` label (defaulting to "No records found") rendered directly via slivers for empty grids.
+
 ## 0.12.0
 
 * **FEATURE**: Added support for drag-and-drop row reordering.

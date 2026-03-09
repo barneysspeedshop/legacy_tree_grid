@@ -59,8 +59,10 @@ class CustomDataTable extends StatefulWidget {
   final List<DataColumnDef> columns;
   final List<Map<String, dynamic>> rows;
   final double dataRowHeight;
+  final double? filterRowHeight;
   final double headerHeight;
   final void Function(Map<String, dynamic> rowData)? onRowTap;
+  final void Function(Map<String, dynamic> rowData)? onRowDoubleTap;
   final void Function(String columnId)? onSort;
   final String? sortColumnId;
   final bool sortAscending;
@@ -145,12 +147,20 @@ class CustomDataTable extends StatefulWidget {
   /// An optional callback when a row is reordered.
   final void Function(int oldIndex, int newIndex)? onReorder;
 
+  /// The message to display when there are no rows in the table.
+  /// Defaults to 'No records found'.
+  final String noDataMessage;
+
+  final ValueChanged<bool?>? onHeaderCheckboxChanged;
+
   const CustomDataTable({
     super.key,
     required this.columns,
     required this.rows,
     this.onRowTap,
+    this.onRowDoubleTap,
     this.dataRowHeight = 25.0,
+    this.filterRowHeight,
     this.headerHeight = 56.0,
     this.onSort,
     this.sortColumnId,
@@ -184,6 +194,8 @@ class CustomDataTable extends StatefulWidget {
     this.rowHeightBuilder,
     this.headerTrailingWidgets,
     this.onReorder,
+    this.noDataMessage = 'No records found',
+    this.onHeaderCheckboxChanged,
   }) : assert(
          !showCheckboxColumn ||
              (rowIdKey != null &&
@@ -267,6 +279,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
   String? _selectedRowId;
   bool _widthsInitialized = false;
   BoxConstraints? _lastConstraints;
+  double? _lastScale;
   late final ScrollController _scrollController;
   static const double _checkboxColumnWidth = 32.0;
 
@@ -308,97 +321,175 @@ class _CustomDataTableState extends State<CustomDataTable> {
   /// Calculates the initial widths for all columns based on their `flex` or
   /// `width` properties and the available screen space.
   void _initializeColumnWidths(BoxConstraints constraints) {
-    // Calculate total width of dividers between columns.
-    final double dividerWidths = widget.columns.length > 1
-        ? widget.columns
-              .sublist(0, widget.columns.length - 1)
-              .asMap()
-              .entries
-              .map((entry) {
-                final int index = entry.key;
-                final bool isDraggable =
-                    widget.allowColumnResize &&
-                    widget.columns[index].resizable &&
-                    widget.columns[index + 1].resizable;
-                return isDraggable ? 10.0 : 1.0;
-              })
-              .reduce((a, b) => a + b)
-        : 0;
+    if (widget.columns.isEmpty) {
+      setState(() {
+        _columnWidths = [];
+        _widthsInitialized = true;
+      });
+      return;
+    }
 
-    // Calculate the total width available for all columns.
-    final double availableWidth =
+    final int columnCount = widget.columns.length;
+    List<double> calculatedWidths = List.filled(columnCount, 0.0);
+    List<bool> isWidthFixed = List.filled(columnCount, false);
+
+    // 1. Calculate divider widths
+    double dividerWidths = (widget.showCheckboxColumn ? 1.0 : 0.0) + 1.0;
+    if (widget.columns.length > 1) {
+      dividerWidths += widget.columns
+          .sublist(0, widget.columns.length - 1)
+          .asMap()
+          .entries
+          .map((entry) {
+            final int index = entry.key;
+            final bool isDraggable =
+                widget.allowColumnResize &&
+                widget.columns[index].resizable &&
+                widget.columns[index + 1].resizable;
+            return isDraggable ? 10.0 : 1.0;
+          })
+          .reduce((a, b) => a + b);
+    }
+
+    // 2. Determine initial available width
+    double totalAvailableWidth =
         constraints.maxWidth -
         (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) -
         dividerWidths;
 
-    List<double> finalWidths;
+    // Ensure we don't have negative available width
+    if (totalAvailableWidth < 0) totalAvailableWidth = 0;
 
-    if (widget.useAvailableWidthDistribution) {
-      // --- NEW LOGIC for Calendar View ---
-      // This logic uses the explicit `width` properties, scales them, and then
-      // distributes extra space if available. It's designed for views that
-      // might need to scroll horizontally.
-      final List<double> initialWidths = widget.columns.map((col) {
-        return (col.width ?? col.minWidth) * widget.scale;
-      }).toList();
+    double remainingWidth = totalAvailableWidth;
+    double totalFlex = 0.0;
 
-      final double sumOfInitialWidths = initialWidths.reduce((a, b) => a + b);
-
-      if (sumOfInitialWidths < availableWidth) {
-        final double extraSpace = availableWidth - sumOfInitialWidths;
-        final nameColumnIndex = widget.columns.indexWhere(
-          (col) => col.isNameColumn,
-        );
-
-        finalWidths = List.from(initialWidths);
-        if (nameColumnIndex != -1) {
-          finalWidths[nameColumnIndex] += extraSpace;
-        } else if (finalWidths.isNotEmpty) {
-          finalWidths[0] += extraSpace;
+    // 3. First pass: Handle fixed width columns and sum up initial flex
+    for (int i = 0; i < columnCount; i++) {
+      final col = widget.columns[i];
+      if (col.width != null) {
+        double width = col.width! * widget.scale;
+        double minWidth = col.minWidth * widget.scale;
+        if (width < minWidth) width = minWidth;
+        if (col.maxWidth != null) {
+          double maxWidth = col.maxWidth! * widget.scale;
+          if (width > maxWidth) width = maxWidth;
         }
+        calculatedWidths[i] = width;
+        isWidthFixed[i] = true;
+        remainingWidth -= width;
+      } else if (col.flex != null) {
+        // Flex column (shares remaining space)
+        totalFlex += col.flex!.toDouble();
       } else {
-        finalWidths = initialWidths;
-      }
-    } else {
-      // --- OLD LOGIC (DEFAULT) for other views ---
-      // This logic uses a mix of `flex` and `width` to proportionally
-      // fill the available screen space without horizontal scrolling.
-      double totalFlex = 0.0;
-      double totalFixedWidth = 0.0;
+        // Factor-based column (treat as fixed width based on factor)
+        // Base unit width * factor * scale
+        const double baseUnitWidth = 80.0; // Adjustable constant
+        double width = baseUnitWidth * col.widthFactor * widget.scale;
 
-      for (final column in widget.columns) {
-        if (column.width != null) {
-          totalFixedWidth += (column.width ?? 0) * widget.scale;
-        } else {
-          totalFlex += (column.flex ?? 1).toDouble();
+        // Respect constraints
+        double minWidth = col.minWidth * widget.scale;
+        if (width < minWidth) width = minWidth;
+        if (col.maxWidth != null) {
+          double maxWidth = col.maxWidth! * widget.scale;
+          if (width > maxWidth) width = maxWidth;
         }
+
+        calculatedWidths[i] = width;
+        isWidthFixed[i] = true;
+        remainingWidth -= width;
       }
-
-      final double availableWidthForFlex = availableWidth - totalFixedWidth;
-      final double widthPerFlex = (availableWidthForFlex > 0 && totalFlex > 0)
-          ? availableWidthForFlex / totalFlex
-          : 0;
-
-      finalWidths = widget.columns.map((column) {
-        if (column.width != null) {
-          return (column.width ?? 0) * widget.scale;
-        } else {
-          return (column.flex ?? 1) * widthPerFlex;
-        }
-      }).toList();
     }
 
-    // Ensure no column is smaller than its defined minimum width.
-    finalWidths = List.generate(widget.columns.length, (index) {
-      final col = widget.columns[index];
-      final width = finalWidths[index];
-      return width.clamp(col.minWidth, double.infinity);
-    });
+    // 4. Iterative pass for flex columns to handle constraints (min/max widths)
+    // We need to loop because applying a constraint to one column might strictly fix its width,
+    // thereby changing the available space and flex ratio for the remaining columns.
+    bool constraintsApplied = true;
+    while (constraintsApplied && totalFlex > 0) {
+      constraintsApplied = false;
+
+      // Calculate the width per flex unit for this iteration
+      // If remainingWidth is negative, we still calculate it to shrink columns if possible,
+      // but minWidths will eventually stop it.
+      double widthPerFlex = remainingWidth / totalFlex;
+
+      for (int i = 0; i < columnCount; i++) {
+        if (isWidthFixed[i]) continue; // Skip already fixed columns
+
+        final col = widget.columns[i];
+        final double flexVal = (col.flex ?? 1).toDouble();
+        double tentativeWidth = flexVal * widthPerFlex;
+
+        // Check if this tentative width violates min/max constraints
+        bool violated = false;
+        double newFixedWidth = tentativeWidth;
+
+        double minWidth = col.minWidth * widget.scale;
+        if (tentativeWidth < minWidth) {
+          newFixedWidth = minWidth;
+          violated = true;
+        } else if (col.maxWidth != null) {
+          double maxWidth = col.maxWidth! * widget.scale;
+          if (tentativeWidth > maxWidth) {
+            newFixedWidth = maxWidth;
+            violated = true;
+          }
+        }
+
+        if (violated) {
+          // Fix this column effectively removing it from the flex pool
+          calculatedWidths[i] = newFixedWidth;
+          isWidthFixed[i] = true;
+          remainingWidth -= newFixedWidth;
+          totalFlex -= flexVal;
+          constraintsApplied = true;
+          // Restart loop since totalFlex and remainingWidth changed
+          break;
+        }
+      }
+    }
+
+    // 5. Final pass: Assign width to remaining flexible columns
+    if (totalFlex > 0) {
+      double widthPerFlex = remainingWidth / totalFlex;
+      for (int i = 0; i < columnCount; i++) {
+        if (!isWidthFixed[i]) {
+          final col = widget.columns[i];
+          double width = (col.flex ?? 1) * widthPerFlex;
+          // Final clamp just in case, though logic above should have handled it
+          double minWidth = col.minWidth * widget.scale;
+          if (width < minWidth) width = minWidth;
+          if (col.maxWidth != null) {
+            double maxWidth = col.maxWidth! * widget.scale;
+            if (width > maxWidth) width = maxWidth;
+          }
+          calculatedWidths[i] = width;
+        }
+      }
+    }
+
+    // 6. Constraints check: If we have over-constrained (e.g. min widths),
+    // calculatedWidths sum might exceed available width.
+    // The previous logic naturally handles "filling" the width (up to max constraints).
+    // If the window is too small, we just overflow (controlled by SingleChildScrollView in build).
+
+    // 7. Width distribution: if enabled, give any remaining space to the name column
+    if (widget.useAvailableWidthDistribution && remainingWidth > 0) {
+      int distributorIndex = widget.columns.indexWhere((c) => c.isNameColumn);
+      if (distributorIndex == -1) {
+        // Fallback to the first flexible column if no name column is designated
+        distributorIndex = widget.columns.indexWhere((c) => c.flex != null);
+      }
+
+      if (distributorIndex != -1) {
+        calculatedWidths[distributorIndex] += remainingWidth;
+        remainingWidth = 0;
+      }
+    }
 
     setState(() {
-      _columnWidths = finalWidths;
+      _columnWidths = calculatedWidths;
       _widthsInitialized = true;
-      widget.onColumnWidthsChanged?.call(finalWidths);
+      widget.onColumnWidthsChanged?.call(calculatedWidths);
     });
   }
 
@@ -443,38 +534,152 @@ class _CustomDataTableState extends State<CustomDataTable> {
     });
   }
 
-  Widget _buildHeader() {
-    if (widget.headerRowBuilder != null) {
-      return widget.headerRowBuilder!(context, widget.columns);
+  Widget _buildSelectAllCheckboxWidget({bool isMerged = false}) {
+    final displayedIds = widget.rows
+        .map((row) => _extractValue(row, widget.rowIdKey!).toString())
+        .toSet();
+    final selectedDisplayedIds = widget.selectedRowIds!.intersection(
+      displayedIds,
+    );
+
+    bool? isChecked;
+    if (selectedDisplayedIds.isEmpty && displayedIds.isNotEmpty) {
+      isChecked = false;
+    } else if (selectedDisplayedIds.length == displayedIds.length &&
+        displayedIds.isNotEmpty) {
+      isChecked = true;
+    } else if (selectedDisplayedIds.isNotEmpty) {
+      isChecked = null; // tristate
+    } else {
+      isChecked = false; // No items displayed
     }
 
-    return _DataTableHeader(
-      columns: widget.columns,
-      columnWidths: _columnWidths,
-      onSort: widget.onSort,
-      sortColumnId: widget.sortColumnId,
-      sortAscending: widget.sortAscending,
-      allowColumnResize: widget.allowColumnResize,
-      onColumnResize: _handleDragUpdate,
-      border: widget.border,
-      showCheckboxColumn: widget.showCheckboxColumn,
-      rows: widget.rows,
-      rowIdKey: widget.rowIdKey,
-      selectedRowIds: widget.selectedRowIds,
-      onSelectionChanged: widget.onSelectionChanged,
-      sortIconAscending: widget.sortIconAscending,
-      sortIconDescending: widget.sortIconDescending,
-      headerTrailingWidgets: widget.headerTrailingWidgets,
+    return SizedBox(
+      width: _checkboxColumnWidth,
+      child: Center(
+        child: Transform.scale(
+          scale: 0.85,
+          child: Checkbox(
+            value: isChecked,
+            tristate: true,
+            onChanged: (bool? value) {
+              final bool shouldSelectAll = isChecked != true;
+              Set<String> newSelection = Set.from(widget.selectedRowIds!);
+              if (shouldSelectAll) {
+                newSelection.addAll(displayedIds);
+              } else {
+                newSelection.removeAll(displayedIds);
+              }
+              if (widget.onHeaderCheckboxChanged != null) {
+                widget.onHeaderCheckboxChanged!(shouldSelectAll);
+              } else {
+                widget.onSelectionChanged?.call(newSelection);
+              }
+            },
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildFilterRow() {
+  Widget _buildMergedHeaderAndFilter() {
+    final bool showCheckbox = widget.showCheckboxColumn;
+    final bool hasDragHandle =
+        widget.columns.isNotEmpty && widget.columns.first.isDragHandle;
+
+    Border? containerBorder;
+    final horizontalBorder = widget.border?.horizontalInside;
+    if (horizontalBorder != null && horizontalBorder != BorderSide.none) {
+      containerBorder = Border(bottom: horizontalBorder);
+    } else if (widget.border == null) {
+      containerBorder = Border(
+        bottom: BorderSide(color: Theme.of(context).dividerColor),
+      );
+    }
+
+    final dividerColor =
+        widget.border?.verticalInside.color ??
+        Theme.of(context).dividerColor.withValues(alpha: 0.5);
+
+    return Container(
+      decoration: BoxDecoration(border: containerBorder),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasDragHandle) ...[
+            SizedBox(width: _columnWidths[0]),
+            VerticalDivider(width: 1.0, thickness: 0.5, color: dividerColor),
+          ],
+          if (showCheckbox) ...[
+            _buildSelectAllCheckboxWidget(isMerged: true),
+            VerticalDivider(width: 1.0, thickness: 0.5, color: dividerColor),
+          ],
+          Expanded(
+            child: Column(
+              children: [
+                SizedBox(
+                  height: widget.headerHeight * widget.scale,
+                  child: _DataTableHeader(
+                    // If we have a drag handle, skip it as we rendered it in the merged area
+                    columns: hasDragHandle
+                        ? widget.columns.skip(1).toList()
+                        : widget.columns,
+                    columnWidths: hasDragHandle
+                        ? _columnWidths.skip(1).toList()
+                        : _columnWidths,
+                    onSort: widget.onSort,
+                    sortColumnId: widget.sortColumnId,
+                    sortAscending: widget.sortAscending,
+                    allowColumnResize: widget.allowColumnResize,
+                    onColumnResize: (details, index) {
+                      // Adjust index because we skipped the first column in the header rendering
+                      _handleDragUpdate(
+                        details,
+                        hasDragHandle ? index + 1 : index,
+                      );
+                    },
+                    border: widget.border,
+                    showCheckboxColumn: false, // Handled by merged layout
+                    rows: widget.rows,
+                    rowIdKey: widget.rowIdKey,
+                    selectedRowIds: widget.selectedRowIds,
+                    onSelectionChanged: widget.onSelectionChanged,
+                    onHeaderCheckboxChanged: widget.onHeaderCheckboxChanged,
+                    sortIconAscending: widget.sortIconAscending,
+                    sortIconDescending: widget.sortIconDescending,
+                    headerTrailingWidgets: widget.headerTrailingWidgets,
+                    scale: widget.scale,
+                    showBottomBorder: widget.allowFiltering,
+                  ),
+                ),
+                if (widget.allowFiltering)
+                  SizedBox(
+                    height:
+                        (widget.filterRowHeight ?? widget.dataRowHeight) *
+                        widget.scale,
+                    child: _buildFilterRow(skipFirst: hasDragHandle),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterRow({bool skipFirst = false}) {
     if (!widget.allowFiltering) {
       return const SizedBox.shrink();
     }
 
     if (widget.filterRowBuilder != null) {
-      return widget.filterRowBuilder!(context, widget.columns, _columnWidths);
+      final filteredCols = skipFirst
+          ? widget.columns.skip(1).toList()
+          : widget.columns;
+      final filteredWidths = skipFirst
+          ? _columnWidths.skip(1).toList()
+          : _columnWidths;
+      return widget.filterRowBuilder!(context, filteredCols, filteredWidths);
     }
 
     // The default implementation is removed. The parent must provide a builder.
@@ -560,6 +765,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
         });
       },
       onRowTap: _handleRowTap,
+      onRowDoubleTap: widget.onRowDoubleTap,
       rowHoverColor: widget.rowHoverColor,
       rowHeight: dynamicRowHeight,
       scale: widget.scale,
@@ -593,8 +799,26 @@ class _CustomDataTableState extends State<CustomDataTable> {
           _lastConstraints = constraints;
         }
 
-        if (constraintsChanged && widget.initialColumnWidths == null) {
+        final bool scaleChanged = widget.scale != _lastScale;
+        if (scaleChanged) {
+          _lastScale = widget.scale;
+        }
+
+        if ((constraintsChanged || scaleChanged) &&
+            widget.initialColumnWidths == null) {
           // Post a frame callback to avoid calling setState during a build.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _initializeColumnWidths(constraints);
+            }
+          });
+        }
+
+        // Safety check: if widths are initialized but the length doesn't match the columns,
+        // we must re-initialize. This can happen if columns are changed dynamically.
+        if (_widthsInitialized &&
+            _columnWidths.length != widget.columns.length) {
+          _widthsInitialized = false;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               _initializeColumnWidths(constraints);
@@ -616,26 +840,21 @@ class _CustomDataTableState extends State<CustomDataTable> {
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _SliverHeaderDelegate(
-                  height: widget.headerHeight * widget.scale,
+                  // Add 1.0 for the bottom border thickness to prevent vertical overflow
+                  height:
+                      (widget.headerHeight +
+                              (widget.allowFiltering
+                                  ? (widget.filterRowHeight ??
+                                        widget.dataRowHeight)
+                                  : 0)) *
+                          widget.scale +
+                      1.0,
                   child: Material(
-                    // Use Material to provide a solid background color that
-                    // prevents rows from showing through during overscroll.
-                    color: Theme.of(context).canvasColor,
-                    child: _buildHeader(),
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    child: _buildMergedHeaderAndFilter(),
                   ),
                 ),
               ),
-              if (widget.allowFiltering)
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _SliverHeaderDelegate(
-                    height: widget.dataRowHeight * widget.scale,
-                    child: Material(
-                      color: Theme.of(context).canvasColor,
-                      child: _buildFilterRow(),
-                    ),
-                  ),
-                ),
               if (widget.onReorder != null)
                 SliverPadding(
                   padding: const EdgeInsets.only(bottom: 60),
@@ -686,11 +905,24 @@ class _CustomDataTableState extends State<CustomDataTable> {
                     ),
                   ),
                 ),
+              if (widget.rows.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      widget.noDataMessage,
+                      style: TextStyle(
+                        fontSize: 12.0 * widget.scale,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         );
 
-        double dividerWidths = 0;
+        double dividerWidths = (widget.showCheckboxColumn ? 1.0 : 0.0) + 1.0;
         if (widget.columns.length > 1) {
           for (int i = 0; i < widget.columns.length - 1; i++) {
             final bool isDraggable =
@@ -702,7 +934,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
         }
 
         final double totalWidth =
-            _columnWidths.reduce((a, b) => a + b) +
+            (_columnWidths.isEmpty
+                ? 0.0
+                : _columnWidths.reduce((a, b) => a + b)) +
             (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) +
             dividerWidths;
 
@@ -731,6 +965,7 @@ class _DataTableRow extends StatelessWidget {
   final bool isSelected;
   final ValueChanged<bool> onHover;
   final void Function(Map<String, dynamic> rowData)? onRowTap;
+  final void Function(Map<String, dynamic> rowData)? onRowDoubleTap;
   final Color? rowHoverColor;
   final double rowHeight;
   final double scale;
@@ -759,6 +994,7 @@ class _DataTableRow extends StatelessWidget {
     required this.isSelected,
     required this.onHover,
     this.onRowTap,
+    this.onRowDoubleTap,
     this.rowHoverColor,
     required this.rowHeight,
     required this.scale,
@@ -789,18 +1025,21 @@ class _DataTableRow extends StatelessWidget {
       child: GestureDetector(
         onTap: () {},
         child: Center(
-          child: Checkbox(
-            value: isSelected,
-            onChanged: (bool? value) {
-              if (value == null) return;
-              Set<String> newSelection = Set.from(selectedRowIds!);
-              if (value) {
-                newSelection.add(rowId);
-              } else {
-                newSelection.remove(rowId);
-              }
-              onSelectionChanged!(newSelection);
-            },
+          child: Transform.scale(
+            scale: 0.85,
+            child: Checkbox(
+              value: isSelected,
+              onChanged: (bool? value) {
+                if (value == null) return;
+                Set<String> newSelection = Set.from(selectedRowIds!);
+                if (value) {
+                  newSelection.add(rowId);
+                } else {
+                  newSelection.remove(rowId);
+                }
+                onSelectionChanged!(newSelection);
+              },
+            ),
           ),
         ),
       ),
@@ -867,6 +1106,9 @@ class _DataTableRow extends StatelessWidget {
       );
     }
 
+    final bool showCheckbox = showCheckboxColumn;
+    final bool hasDragHandle = columns.isNotEmpty && columns.first.isDragHandle;
+
     return MouseRegion(
       onEnter: (_) => onHover(true),
       onExit: (_) => onHover(false),
@@ -889,147 +1131,258 @@ class _DataTableRow extends StatelessWidget {
                         onTap: onRowTap != null
                             ? () => onRowTap!(rowData)
                             : null,
+                        onDoubleTap: onRowDoubleTap != null
+                            ? () => onRowDoubleTap!(rowData)
+                            : null,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (showCheckboxColumn) _buildRowCheckbox(),
-                            ...List.generate(columns.length, (colIndex) {
-                              final column = columns[colIndex];
-                              String displayValue;
-                              if (column.formattedValue != null) {
-                                displayValue = column.formattedValue!(rowData);
-                              } else {
-                                displayValue =
-                                    _extractValue(
-                                      rowData,
-                                      column.id,
-                                    )?.toString() ??
-                                    '';
-                              }
+                            if (showCheckbox && !hasDragHandle) ...[
+                              _buildRowCheckbox(),
+                              VerticalDivider(
+                                width: 1.0,
+                                thickness: 0.5,
+                                color:
+                                    border?.verticalInside.color ??
+                                    Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.5),
+                              ),
+                            ],
+                            ...() {
+                              final List<Widget> cells = [];
+                              for (
+                                int colIndex = 0;
+                                colIndex < columns.length;
+                                colIndex++
+                              ) {
+                                final column = columns[colIndex];
+                                String displayValue;
+                                if (column.formattedValue != null) {
+                                  displayValue = column.formattedValue!(
+                                    rowData,
+                                  );
+                                } else {
+                                  displayValue =
+                                      _extractValue(
+                                        rowData,
+                                        column.id,
+                                      )?.toString() ??
+                                      '';
+                                }
 
-                              Widget cellContent;
-                              if (column.cellBuilder != null) {
-                                // If a builder is provided, call it.
-                                cellContent =
-                                    column.cellBuilder!(context, rowData) ??
-                                    Text(
-                                      displayValue,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    );
-                              } else {
-                                // Default rendering for non-interactive cells.
-                                // It's wrapped in a GestureDetector to handle onRowTap for this specific cell.
-                                cellContent = GestureDetector(
-                                  behavior: HitTestBehavior
-                                      .opaque, // Ensure the whole cell area is tappable
-                                  onTap: onRowTap != null
-                                      ? () => onRowTap!(rowData)
-                                      : null,
-                                  child: Container(
-                                    // Use a container to fill the cell and align the text
-                                    width: double.infinity,
-                                    alignment: _textAlignToAlignment(
-                                      column.alignment,
+                                Widget cellContent;
+                                if (column.cellBuilder != null) {
+                                  // If a builder is provided, call it.
+                                  cellContent = Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal:
+                                          (column.useCellPadding ? 8.0 : 0.0) *
+                                          scale,
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0,
-                                    ),
-                                    child: Text(
-                                      displayValue,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              // If the column is configured to only show on hover, wrap the content
-                              // in a Visibility widget that is controlled by the row's hover state.
-                              if (column.showOnRowHover) {
-                                cellContent = Visibility.maintain(
-                                  visible: isHovered,
-                                  child: cellContent,
-                                );
-                              }
-
-                              // Check if this column is a drag handle and wrap it
-                              if (column.isDragHandle) {
-                                // Use the outer 'index' (rowIndex) for the drag listener
-                                cellContent = ReorderableDragStartListener(
-                                  index: index,
-                                  child: cellContent,
-                                );
-                              }
-
-                              if (isTree && column.isNameColumn) {
-                                final int indentation =
-                                    rowData[indentationLevelKey] as int? ?? 0;
-                                final bool hasChildren =
-                                    rowData[hasChildrenKey] ==
-                                    false; // Inverted logic from original
-                                final bool isExpanded =
-                                    rowData[isExpandedKey] as bool? ?? false;
-                                final String rowId = _extractValue(
-                                  rowData,
-                                  rowIdKey,
-                                ).toString();
-
-                                cellContent = Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(width: indentation * 20.0 * scale),
-                                    if (hasChildren) ...[
-                                      InkWell(
-                                        onTap: () => onToggleExpansion!(rowId),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(4.0),
-                                          child:
-                                              isExpanded // Use provided icons or default Material icons
-                                              ? (treeIconExpanded ??
-                                                    const Icon(
-                                                      Icons.expand_more,
-                                                    ))
-                                              : (treeIconCollapsed ??
-                                                    const Icon(
-                                                      Icons.chevron_right,
-                                                    )),
-                                        ),
+                                    child: Align(
+                                      alignment: _textAlignToAlignment(
+                                        column.alignment,
                                       ),
-                                    ] else
+                                      child:
+                                          column.cellBuilder!(
+                                            context,
+                                            rowData,
+                                          ) ??
+                                          Text(
+                                            displayValue,
+                                            overflow: TextOverflow.ellipsis,
+                                            style:
+                                                (Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium ??
+                                                        TextStyle(
+                                                          fontSize:
+                                                              14.0 * scale,
+                                                        ))
+                                                    .copyWith(
+                                                      fontSize:
+                                                          (Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodyMedium
+                                                                  ?.fontSize ??
+                                                              14.0) *
+                                                          scale,
+                                                    ),
+                                          ),
+                                    ),
+                                  );
+                                } else {
+                                  // Default rendering for non-interactive cells.
+                                  // It's wrapped in a GestureDetector to handle onRowTap for this specific cell.
+                                  cellContent = GestureDetector(
+                                    behavior: HitTestBehavior
+                                        .opaque, // Ensure the whole cell area is tappable
+                                    onTap: onRowTap != null
+                                        ? () => onRowTap!(rowData)
+                                        : null,
+                                    onDoubleTap: onRowDoubleTap != null
+                                        ? () => onRowDoubleTap!(rowData)
+                                        : null,
+                                    child: Container(
+                                      // Use a container to fill the cell and align the text
+                                      width: double.infinity,
+                                      alignment: _textAlignToAlignment(
+                                        column.alignment,
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            (column.useCellPadding
+                                                ? 8.0
+                                                : 0.0) *
+                                            scale,
+                                      ),
+                                      child: Text(
+                                        displayValue,
+                                        overflow: TextOverflow.ellipsis,
+                                        style:
+                                            (Theme.of(
+                                                      context,
+                                                    ).textTheme.bodyMedium ??
+                                                    TextStyle(
+                                                      fontSize: 14.0 * scale,
+                                                    ))
+                                                .copyWith(
+                                                  fontSize:
+                                                      (Theme.of(context)
+                                                              .textTheme
+                                                              .bodyMedium
+                                                              ?.fontSize ??
+                                                          14.0) *
+                                                      scale,
+                                                ),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                // If the column is configured to only show on hover, wrap the content
+                                // in a Visibility widget that is controlled by the row's hover state.
+                                if (column.showOnRowHover) {
+                                  cellContent = Visibility.maintain(
+                                    visible: isHovered,
+                                    child: cellContent,
+                                  );
+                                }
+
+                                // Check if this column is a drag handle and wrap it
+                                if (column.isDragHandle) {
+                                  // Use the outer 'index' (rowIndex) for the drag listener
+                                  cellContent = ReorderableDragStartListener(
+                                    index: index,
+                                    child: cellContent,
+                                  );
+                                }
+
+                                if (isTree && column.isNameColumn) {
+                                  final int indentation =
+                                      rowData[indentationLevelKey] as int? ?? 0;
+                                  final bool hasChildren =
+                                      rowData[hasChildrenKey] ==
+                                      false; // Inverted logic from original
+                                  final bool isExpanded =
+                                      rowData[isExpandedKey] as bool? ?? false;
+                                  final String rowId = _extractValue(
+                                    rowData,
+                                    rowIdKey,
+                                  ).toString();
+
+                                  cellContent = Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
                                       SizedBox(
-                                        width: 24.0 * scale,
-                                      ), // Keep alignment consistent
-                                    const SizedBox(width: 8.0),
-                                    Expanded(child: cellContent),
-                                  ],
+                                        width: indentation * 20.0 * scale,
+                                      ),
+                                      if (hasChildren) ...[
+                                        InkWell(
+                                          onTap: () =>
+                                              onToggleExpansion!(rowId),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(4.0),
+                                            child:
+                                                isExpanded // Use provided icons or default Material icons
+                                                ? (treeIconExpanded ??
+                                                      const Icon(
+                                                        Icons.expand_more,
+                                                      ))
+                                                : (treeIconCollapsed ??
+                                                      const Icon(
+                                                        Icons.chevron_right,
+                                                      )),
+                                          ),
+                                        ),
+                                      ] else
+                                        SizedBox(
+                                          width: 24.0 * scale,
+                                        ), // Keep alignment consistent
+                                      const SizedBox(width: 8.0),
+                                      Expanded(child: cellContent),
+                                    ],
+                                  );
+                                }
+
+                                final cell = SizedBox(
+                                  width: columnWidths[colIndex],
+                                  child: cellContent,
                                 );
+
+                                cells.add(cell);
+
+                                if (colIndex < columns.length - 1) {
+                                  final bool isDraggable =
+                                      allowColumnResize &&
+                                      columns[colIndex].resizable &&
+                                      columns[colIndex + 1].resizable;
+                                  cells.add(
+                                    VerticalDivider(
+                                      width: isDraggable ? 10.0 : 1.0,
+                                      thickness: 0.5,
+                                      color:
+                                          border?.verticalInside.color ??
+                                          Theme.of(
+                                            context,
+                                          ).dividerColor.withValues(alpha: 0.5),
+                                    ),
+                                  );
+                                } else {
+                                  cells.add(
+                                    VerticalDivider(
+                                      width: 1.0,
+                                      thickness: 0.5,
+                                      color:
+                                          border?.verticalInside.color ??
+                                          Theme.of(
+                                            context,
+                                          ).dividerColor.withValues(alpha: 0.5),
+                                    ),
+                                  );
+                                }
+
+                                // Special case: if we have a drag handle at col 0, insert checkbox after it
+                                if (colIndex == 0 &&
+                                    hasDragHandle &&
+                                    showCheckbox) {
+                                  cells.add(_buildRowCheckbox());
+                                  cells.add(
+                                    VerticalDivider(
+                                      width: 1.0,
+                                      thickness: 0.5,
+                                      color:
+                                          border?.verticalInside.color ??
+                                          Theme.of(
+                                            context,
+                                          ).dividerColor.withValues(alpha: 0.5),
+                                    ),
+                                  );
+                                }
                               }
-
-                              final cell = SizedBox(
-                                width: columnWidths[colIndex],
-                                child: cellContent,
-                              );
-
-                              if (colIndex < columns.length - 1) {
-                                final bool isDraggable =
-                                    allowColumnResize &&
-                                    columns[colIndex].resizable &&
-                                    columns[colIndex + 1].resizable;
-
-                                final divider = VerticalDivider(
-                                  width: isDraggable ? 10.0 : 1.0,
-                                  thickness: 1,
-                                  color: border?.verticalInside.color,
-                                );
-                                return [cell, divider];
-                              }
-                              return [cell];
-                            }).expand((e) => e),
+                              return cells;
+                            }(),
                           ],
                         ),
                       ),
@@ -1061,6 +1414,9 @@ class _DataTableHeader extends StatelessWidget {
   final Widget? sortIconAscending;
   final Widget? sortIconDescending;
   final List<WidgetBuilder>? headerTrailingWidgets;
+  final ValueChanged<bool?>? onHeaderCheckboxChanged;
+  final double scale;
+  final bool showBottomBorder;
 
   const _DataTableHeader({
     required this.columns,
@@ -1079,46 +1435,10 @@ class _DataTableHeader extends StatelessWidget {
     this.sortIconAscending,
     this.sortIconDescending,
     this.headerTrailingWidgets,
+    required this.scale,
+    this.onHeaderCheckboxChanged,
+    this.showBottomBorder = true,
   });
-
-  Widget _buildSelectAllCheckbox() {
-    final displayedIds = rows
-        .map((row) => _extractValue(row, rowIdKey!).toString())
-        .toSet();
-    final selectedDisplayedIds = selectedRowIds!.intersection(displayedIds);
-
-    bool? isChecked;
-    if (selectedDisplayedIds.isEmpty && displayedIds.isNotEmpty) {
-      isChecked = false;
-    } else if (selectedDisplayedIds.length == displayedIds.length &&
-        displayedIds.isNotEmpty) {
-      isChecked = true;
-    } else if (selectedDisplayedIds.isNotEmpty) {
-      isChecked = null; // tristate
-    } else {
-      isChecked = false; // No items displayed
-    }
-
-    return SizedBox(
-      width: _CustomDataTableState._checkboxColumnWidth,
-      child: Center(
-        child: Checkbox(
-          value: isChecked,
-          tristate: true,
-          onChanged: (bool? value) {
-            final bool shouldSelectAll = isChecked != true;
-            Set<String> newSelection = Set.from(selectedRowIds!);
-            if (shouldSelectAll) {
-              newSelection.addAll(displayedIds);
-            } else {
-              newSelection.removeAll(displayedIds);
-            }
-            onSelectionChanged!(newSelection);
-          },
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1133,28 +1453,36 @@ class _DataTableHeader extends StatelessWidget {
     }
 
     return Container(
-      decoration: BoxDecoration(border: containerBorder),
+      decoration: BoxDecoration(
+        border: showBottomBorder ? containerBorder : null,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (showCheckboxColumn) _buildSelectAllCheckbox(),
           ...List.generate(columns.length, (index) {
             final column = columns[index];
             final isCurrentSortColumn = sortColumnId == column.id;
 
             final headerText = Text(
               column.caption,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              style:
+                  (Theme.of(context).textTheme.titleSmall ??
+                          TextStyle(fontSize: 14.0 * scale))
+                      .copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize:
+                            (Theme.of(context).textTheme.titleSmall?.fontSize ??
+                                14.0) *
+                            scale,
+                      ),
               overflow: TextOverflow.ellipsis,
             );
             final sortIndicator = isCurrentSortColumn
                 ? (sortAscending //
                       ? (sortIconAscending ??
-                            const Icon(Icons.arrow_upward, size: 16))
+                            Icon(Icons.arrow_upward, size: 16 * scale))
                       : (sortIconDescending ??
-                            const Icon(Icons.arrow_downward, size: 16)))
+                            Icon(Icons.arrow_downward, size: 16 * scale)))
                 : const SizedBox.shrink();
 
             final headerContent = InkWell(
@@ -1164,15 +1492,20 @@ class _DataTableHeader extends StatelessWidget {
                           null //
                   ? () => onSort!(column.id)
                   : null,
-              child: Row(
-                mainAxisAlignment: _textAlignToMainAxisAlignment(
-                  column.alignment,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: (column.useCellPadding ? 8.0 : 0.0) * scale,
                 ),
-                children: [
-                  Expanded(child: headerText),
-                  if (isCurrentSortColumn) const SizedBox(width: 6),
-                  sortIndicator,
-                ],
+                child: Row(
+                  mainAxisAlignment: _textAlignToMainAxisAlignment(
+                    column.headerAlignment,
+                  ),
+                  children: [
+                    Expanded(child: headerText),
+                    if (isCurrentSortColumn) const SizedBox(width: 6),
+                    sortIndicator,
+                  ],
+                ),
               ),
             );
 
@@ -1209,18 +1542,35 @@ class _DataTableHeader extends StatelessWidget {
                         cursor: SystemMouseCursors.resizeLeftRight,
                         child: VerticalDivider(
                           width: 10,
-                          thickness: 1,
-                          color: border?.verticalInside.color,
+                          thickness: 0.5,
+                          color:
+                              border?.verticalInside.color ??
+                              Theme.of(
+                                context,
+                              ).dividerColor.withValues(alpha: 0.5),
                         ),
                       ),
                     )
                   : VerticalDivider(
                       width: 1,
-                      color: border?.verticalInside.color,
+                      thickness: 0.5,
+                      color:
+                          border?.verticalInside.color ??
+                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
                     );
               return [finalHeaderCell, divider];
             }
-            return [finalHeaderCell];
+
+            return [
+              finalHeaderCell,
+              VerticalDivider(
+                width: 1.0,
+                thickness: 0.5,
+                color:
+                    border?.verticalInside.color ??
+                    Theme.of(context).dividerColor.withValues(alpha: 0.5),
+              ),
+            ];
           }).expand((e) => e),
         ],
       ),

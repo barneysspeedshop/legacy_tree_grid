@@ -93,6 +93,11 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// A callback triggered when a row is tapped.
   final void Function(Map<String, dynamic> rowData)? onRowTap;
 
+  final void Function(Map<String, dynamic> rowData)? onRowDoubleTap;
+
+  /// A callback triggered when the row selection changes.
+  final ValueChanged<Set<String>>? onSelectionChanged;
+
   /// Whether to show the checkbox column for row selection.
   /// Defaults to `false`.
   final bool showCheckboxColumn;
@@ -101,6 +106,8 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// If true, [isDeleted] must be provided.
   /// Defaults to `false`.
   final bool showDeletedToggle;
+  final bool showDeleted;
+  final ValueChanged<bool?>? onShowDeletedChanged;
 
   /// [Client-side] A function that determines if an item is considered "deleted".
   /// Required if [showDeletedToggle] is true.
@@ -144,13 +151,20 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// This is determined by `_showDeleted` in client mode.
   final bool isUndeleteMode;
 
+  final TableBorder? border;
+
   /// Whether to show the footer with pagination and action controls.
   /// Defaults to `true`.
   final bool showFooter;
 
+  /// Whether to show a border on the default filter widgets.
+  /// Defaults to `true`.
+  final bool showFilterCellBorder;
+
   /// Whether to show the "Include Children" checkbox in the footer when in tree mode.
   /// Defaults to `true`.
   final bool allowIncludeChildrenInFilterToggle;
+  final bool useAvailableWidthDistribution;
 
   // --- Tree Grid Properties ---
 
@@ -174,6 +188,12 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// A callback function that is invoked when a row's expansion state is toggled in tree mode.
   final void Function(String rowId, bool isExpanded)? onRowToggle;
 
+  /// Custom icon widget to display when a tree node is expanded.
+  final Widget? treeIconExpanded;
+
+  /// Custom icon widget to display when a tree node is collapsed.
+  final Widget? treeIconCollapsed;
+
   /// An optional color for the row hover effect.
   final Color? rowHoverColor;
 
@@ -184,6 +204,9 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// The height of the header row.
   /// Defaults to 56.0.
   final double headerHeight;
+
+  /// The height of the filter row. If null, falls back to dataRowHeight.
+  final double? filterRowHeight;
 
   /// An optional builder to dynamically determine the height of each row.
   /// If not provided, `dataRowHeight` from `CustomDataTable` is used.
@@ -197,8 +220,12 @@ class UnifiedDataGrid<T> extends StatefulWidget {
   /// An optional ID of a row to be programmatically selected.
   final String? selectedRowId;
 
-  /// An optional callback when a row is reordered.
+  /// An optional set of row IDs to be programmatically selected.
+  final Set<String>? selectedRowIds;
+
   final void Function(int oldIndex, int newIndex)? onReorder;
+  final double scale;
+  final double dataRowHeight;
 
   const UnifiedDataGrid({
     super.key,
@@ -217,8 +244,11 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.onAdd,
     this.onDelete,
     this.onRowTap,
+    this.onRowDoubleTap,
     this.showCheckboxColumn = false,
     this.showDeletedToggle = false,
+    this.showDeleted = false,
+    this.onShowDeletedChanged,
     this.isDeleted,
     this.serverShowDeletedValue,
     this.onServerShowDeletedChanged,
@@ -239,14 +269,24 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.initialExpandedRowIds,
     this.onRowToggle,
     this.isExpandedKey, // Add this
+    this.treeIconExpanded,
+    this.treeIconCollapsed,
     this.rowHoverColor,
     this.headerHeight = 56.0,
+    this.filterRowHeight,
+    this.dataRowHeight = 56.0,
     this.initialViewState,
     this.rowHeightBuilder,
     this.headerTrailingWidgets,
     this.scrollController,
-    this.selectedRowId,
+    this.selectedRowId, // Keep for backward compatibility
+    this.selectedRowIds, // Add this for multi-selection
+    this.onSelectionChanged,
     this.onReorder,
+    this.showFilterCellBorder = true,
+    this.border,
+    this.scale = 1.0,
+    this.useAvailableWidthDistribution = false,
   }) : assert(
          (mode == DataGridMode.client &&
                  (clientData != null || clientFetch != null)) ||
@@ -304,9 +344,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         widget.scrollController ??
         ScrollController(debugLabel: 'UnifiedDataGrid');
 
-    _expandedRowIds = widget.initialExpandedRowIds ?? {};
+    // Create a mutable copy of the initial expanded row IDs
+    _expandedRowIds = widget.initialExpandedRowIds != null
+        ? Set.from(widget.initialExpandedRowIds!)
+        : {};
     _showDeleted = false;
-    _selectedRowIds = widget.selectedRowId != null
+    _selectedRowIds = widget.selectedRowIds != null
+        ? Set.from(widget.selectedRowIds!)
+        : widget.selectedRowId != null
         ? {widget.selectedRowId!}
         : {};
 
@@ -359,10 +404,18 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             : {};
       });
     }
+    // Also sync the multi-selection set when the parent changes it.
+    if (widget.selectedRowIds != oldWidget.selectedRowIds) {
+      setState(() {
+        _selectedRowIds = widget.selectedRowIds != null
+            ? Set.from(widget.selectedRowIds!)
+            : {};
+      });
+    }
     if (widget.mode == DataGridMode.client) {
       if (widget.clientData != null &&
           !listEquals(widget.clientData, oldWidget.clientData)) {
-        _setDataFromWidget();
+        _setDataFromWidget(clearSelection: false);
       }
     } else {
       // For server mode, detect if external properties that affect the fetch have changed.
@@ -677,6 +730,28 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     });
   }
 
+  List<String> _getVisibleIds() {
+    if (widget.mode == DataGridMode.client) {
+      if (widget.isTree) {
+        return _treeData.map((row) => row[widget.rowIdKey].toString()).toList();
+      } else {
+        final processed = _getProcessedClientData();
+        return processed
+            .map((item) => widget.toMap(item)[widget.rowIdKey].toString())
+            .toList();
+      }
+    } else {
+      final serverData = _paginatedData?.content ?? [];
+      if (widget.isTree) {
+        return _treeData.map((row) => row[widget.rowIdKey].toString()).toList();
+      } else {
+        return serverData
+            .map((item) => widget.toMap(item)[widget.rowIdKey].toString())
+            .toList();
+      }
+    }
+  }
+
   // --- ==================== Event Handlers ==================== ---
 
   Future<void> _handleDelete() async {
@@ -688,6 +763,13 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       await widget.onDelete!(_selectedRowIds);
       await refresh();
     }
+  }
+
+  void _updateSelection(Set<String> newSelection) {
+    setState(() {
+      _selectedRowIds = newSelection;
+    });
+    widget.onSelectionChanged?.call(_selectedRowIds);
   }
 
   void _handleSort(String columnId) {
@@ -1034,7 +1116,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             if (isBool) ...[
               const DropdownMenuItem<String>(value: 'true', child: Text('Yes')),
               const DropdownMenuItem<String>(value: 'false', child: Text('No')),
-            ] else
+            ] else if (column.filterOptionsMap != null)
+              ...column.filterOptionsMap!.entries.map(
+                (entry) => DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: Text(entry.value, overflow: TextOverflow.ellipsis),
+                ),
+              )
+            else
               ...column.filterOptions!.map(
                 (option) => DropdownMenuItem<String>(
                   value: option,
@@ -1056,10 +1145,15 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                 }
               });
             },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              border: widget.showFilterCellBorder
+                  ? const OutlineInputBorder()
+                  : InputBorder.none,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
             ),
           );
           break;
@@ -1072,7 +1166,10 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             );
             _filterControllers[column.id] = controller;
             controller.addListener(() {
-              _filterValues[column.id] = controller.text;
+              final newValue = controller.text;
+              if (_filterValues[column.id] == newValue) return;
+              _filterValues[column.id] = newValue;
+
               if (widget.mode == DataGridMode.client) {
                 setState(() {}); // Live filter for client mode
               } else {
@@ -1086,7 +1183,9 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             decoration: InputDecoration(
               hintStyle: const TextStyle(fontSize: 14),
               hintText: 'Filter...',
-              border: const OutlineInputBorder(),
+              border: widget.showFilterCellBorder
+                  ? const OutlineInputBorder()
+                  : InputBorder.none,
               isDense: true,
               prefixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1133,24 +1232,36 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
             columns[i + 1].resizable;
         final divider = VerticalDivider(
           width: isDraggable ? 10.0 : 1.0,
-          thickness: 1,
+          thickness: 0.5,
+          color:
+              widget.border?.verticalInside.color ??
+              Theme.of(context).dividerColor.withValues(alpha: 0.5),
         );
         filterWidgets.add(divider);
+      }
+
+      // Add trailing divider to match header/row
+      if (i == columns.length - 1) {
+        filterWidgets.add(
+          VerticalDivider(
+            width: 1.0,
+            thickness: 0.5,
+            color:
+                widget.border?.verticalInside.color ??
+                Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          ),
+        );
       }
     }
 
     return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerColor),
-        ),
+      decoration: const BoxDecoration(
+        // The border is now handled by the parent CustomDataTable in the merged view
+        border: null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (widget.showCheckboxColumn) const SizedBox(width: 32.0),
-          ...filterWidgets,
-        ],
+        children: filterWidgets,
       ),
     );
   }
@@ -1236,7 +1347,7 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
 
     final bool hasSelection = _selectedRowIds.isNotEmpty;
     final bool actualUndeleteMode = widget.mode == DataGridMode.client
-        ? _showDeleted
+        ? widget.showDeleted
         : widget.isUndeleteMode;
 
     // --- Determine "Show Deleted" state and callback for the footer ---
@@ -1244,11 +1355,8 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     ValueChanged<bool?>? showDeletedChangedCallback;
 
     if (widget.mode == DataGridMode.client && widget.showDeletedToggle) {
-      showDeletedValue = _showDeleted;
-      showDeletedChangedCallback = (value) => setState(() {
-        _showDeleted = value ?? false;
-        _selectedRowIds.clear();
-      });
+      showDeletedValue = widget.showDeleted;
+      showDeletedChangedCallback = widget.onShowDeletedChanged;
     } else if (widget.mode == DataGridMode.server &&
         widget.serverShowDeletedValue != null) {
       showDeletedValue = widget.serverShowDeletedValue;
@@ -1282,30 +1390,47 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
       headerTrailingWidgets: widget
           .headerTrailingWidgets, // Use displayRows for both tree and flat list
       rows: displayRows, // Use displayRows for both tree and flat list
+      dataRowHeight: widget.dataRowHeight,
+      filterRowHeight: widget.filterRowHeight,
       onRowTap: widget.onRowTap,
+      onRowDoubleTap: widget.onRowDoubleTap,
       onSort: widget.allowSorting ? _handleSort : null,
       sortColumnId: _sortColumnId,
       sortAscending: _sortAscending,
+      onHeaderCheckboxChanged: (val) {
+        if (val == true) {
+          final allIds = _getVisibleIds();
+          _updateSelection(allIds.toSet());
+        } else {
+          _updateSelection({});
+        }
+      },
       showCheckboxColumn: widget.showCheckboxColumn,
       rowIdKey: widget.rowIdKey,
       rowHoverColor: widget.rowHoverColor,
       selectedRowIds: _selectedRowIds,
-      onSelectionChanged: (newSelection) =>
-          setState(() => _selectedRowIds = newSelection), // TODO: this is a bug
+      onSelectionChanged: (newSelection) => _updateSelection(newSelection),
+      border: widget.border,
       allowFiltering: widget.allowFiltering,
       filterRowBuilder: widget.allowFiltering ? _buildFilterRow : null,
       allowColumnResize: widget.allowColumnResize,
       isTree: widget.isTree,
       onToggleExpansion: widget.isTree ? _onToggleExpansion : null,
+      treeIconExpanded: widget.treeIconExpanded,
+      treeIconCollapsed: widget.treeIconCollapsed,
       isExpandedKey: 'expanded',
       hasChildrenKey: 'leaf',
       indentationLevelKey: '_indentationLevel',
       isEffectivelyVisibleKey: '_isEffectivelyVisible',
-      initialColumnWidths: initialColumnWidths,
-      onColumnWidthsChanged: (newWidths) {
-        _columnWidths = newWidths;
+      initialColumnWidths: _columnWidths.isNotEmpty
+          ? _columnWidths
+          : initialColumnWidths,
+      useAvailableWidthDistribution: widget.useAvailableWidthDistribution,
+      onColumnWidthsChanged: (widths) {
+        _columnWidths = widths;
       },
       onReorder: widget.onReorder,
+      scale: widget.scale,
     );
 
     return Column(
