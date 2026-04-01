@@ -22,12 +22,16 @@ class DataGridFetchOptions {
   /// A map of filters, where the key is the column ID and the value is the filter string.
   final Map<String, String> filters;
 
+  /// The set of row IDs that are currently expanded in the tree grid.
+  final Set<String> expandedRowIds;
+
   const DataGridFetchOptions({
     required this.page,
     required this.pageSize,
     this.sortBy,
     this.sortAscending = true,
     this.filters = const {},
+    this.expandedRowIds = const {},
   });
 
   DataGridFetchOptions copyWith({
@@ -36,6 +40,7 @@ class DataGridFetchOptions {
     String? sortBy,
     bool? sortAscending,
     Map<String, String>? filters,
+    Set<String>? expandedRowIds,
   }) {
     return DataGridFetchOptions(
       page: page ?? this.page,
@@ -43,6 +48,7 @@ class DataGridFetchOptions {
       sortBy: sortBy ?? this.sortBy,
       sortAscending: sortAscending ?? this.sortAscending,
       filters: filters ?? this.filters,
+      expandedRowIds: expandedRowIds ?? this.expandedRowIds,
     );
   }
 
@@ -56,6 +62,7 @@ class DataGridFetchOptions {
     params['page'] = page;
     params['start'] = (page - 1) * pageSize;
     params['size'] = pageSize;
+    params['expandedRowIds'] = expandedRowIds.toList();
 
     if (sortBy != null) {
       params['sort'] = '$sortBy,${sortAscending ? 'ASC' : 'DESC'}';

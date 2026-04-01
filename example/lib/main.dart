@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:legacy_context_menu/legacy_context_menu.dart'
-    show ContextMenuItem;
 import 'package:legacy_tree_grid/legacy_tree_grid.dart';
+import 'package:legacy_context_menu/legacy_context_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 void main() {
   runApp(const MyApp());
@@ -14,16 +14,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Unified Data Grid Demo',
+      title: 'Legacy Tree Grid Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
+        useMaterial3: true,
       ),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+        useMaterial3: true,
       ),
-      themeMode: ThemeMode.system,
       home: const MyHomePage(),
     );
   }
@@ -37,115 +37,60 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _gridKey = GlobalKey<UnifiedDataGridState>();
-  GridViewState? _savedViewState;
+  final GlobalKey<UnifiedDataGridState> _gridKey = GlobalKey<UnifiedDataGridState>();
+  
+  List<Map<String, dynamic>> _data = [];
+  Set<String> _selectedIds = {};
+  final Set<String> _expandedIds = {};
   bool _isLoadingView = true;
-
-  // Settings state
-  bool _isDocked = false;
-
-  // Grid Type state
+  GridViewState? _savedViewState;
+  
+  // Settings
+  bool _isDocked = true;
   int _currentGridTypeIndex = 0; // 0: Unified, 1: Client, 2: Server, 3: Custom
-
-  // Grid configuration state
-  int _currentExampleIndex = 0; // 0: Tree Grid, 1: Flat List
-  double _headerHeight = 38.0;
-  double _dataRowHeight = 32.0;
-  double _filterRowHeight = 32.0;
+  int _currentExampleIndex = 0; // 0: Tree, 1: Flat
   bool _allowFiltering = true;
+  bool _allowSorting = true;
   bool _allowColumnResize = true;
-  bool _showCheckboxColumn = false;
+  bool _showCheckboxColumn = true;
   bool _showFooter = true;
-  bool _useAvailableWidthDistribution = false;
-  bool _showFilterCellBorder = true;
   double _scale = 1.0;
-
-  final List<Map<String, dynamic>> _customTreeData = [
-    {
-      'id': '1',
-      'name': 'John Doe',
-      'age': 30,
-      'parent': null,
-      'status': 'active',
-      '__level': 0,
-      '__isLeaf': false,
-      '__isExpanded': true,
-      '__isVisible': true,
-    },
-    {
-      'id': '2',
-      'name': 'Jane Doe',
-      'age': 28,
-      'parent': '1',
-      'status': 'inactive',
-      '__level': 1,
-      '__isLeaf': true,
-      '__isExpanded': false,
-      '__isVisible': true,
-    },
-    {
-      'id': '3',
-      'name': 'Peter Pan',
-      'age': 12,
-      'parent': null,
-      'status': 'pending',
-      '__level': 0,
-      '__isLeaf': false,
-      '__isExpanded': true,
-      '__isVisible': true,
-    },
-    {
-      'id': '4',
-      'name': 'Wendy Darling',
-      'age': 10,
-      'parent': '3',
-      'status': 'active',
-      '__level': 1,
-      '__isLeaf': true,
-      '__isExpanded': false,
-      '__isVisible': true,
-    },
-  ];
-
-  void _onToggleCustomTreeExpansion(String id) {
-    setState(() {
-      final node = _customTreeData.firstWhere((e) => e['id'] == id);
-      final isExpanded = !(node['__isExpanded'] as bool);
-      node['__isExpanded'] = isExpanded;
-
-      void toggleChildrenVisibility(String parentId, bool parentVisible) {
-        for (var child in _customTreeData.where(
-          (e) => e['parent'] == parentId,
-        )) {
-          child['__isVisible'] = parentVisible;
-          if (!(child['__isLeaf'] as bool)) {
-            toggleChildrenVisibility(
-              child['id'] as String,
-              parentVisible && (child['__isExpanded'] as bool),
-            );
-          }
-        }
-      }
-
-      toggleChildrenVisibility(id, isExpanded);
-    });
-  }
 
   @override
   void initState() {
     super.initState();
+    _loadInitialData();
     _loadSavedView();
+  }
+
+  void _loadInitialData() {
+    if (_currentExampleIndex == 0) {
+      _data = [
+        {'id': '1', 'name': 'Project Alpha', 'age': 45, 'status': 'active', 'parent': null},
+        {'id': '2', 'name': 'Task 1.1', 'age': 25, 'status': 'active', 'parent': '1'},
+        {'id': '3', 'name': 'Task 1.2', 'age': 30, 'status': 'pending', 'parent': '1'},
+        {'id': '4', 'name': 'Subtask 1.2.1', 'age': 20, 'status': 'active', 'parent': '3'},
+        {'id': '5', 'name': 'Project Beta', 'age': 50, 'status': 'inactive', 'parent': null},
+        {'id': '6', 'name': 'Task 2.1', 'age': 35, 'status': 'active', 'parent': '5'},
+      ];
+    } else {
+      _data = List.generate(100, (i) => {
+        'id': (i + 1).toString(),
+        'name': 'User ${i + 1}',
+        'age': 20 + (i % 40),
+        'status': i % 3 == 0 ? 'active' : (i % 3 == 1 ? 'pending' : 'inactive'),
+        'parent': null,
+      });
+    }
   }
 
   Future<void> _loadSavedView() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedViewJson = prefs.getString('my_grid_view');
-    if (savedViewJson != null) {
-      setState(() {
-        _savedViewState = GridViewState.fromJsonString(savedViewJson);
-      });
-    }
+    final savedJson = prefs.getString('my_grid_view');
     setState(() {
+      if (savedJson != null) {
+        _savedViewState = GridViewState.fromJsonString(savedJson);
+      }
       _isLoadingView = false;
     });
   }
@@ -154,477 +99,385 @@ class _MyHomePageState extends State<MyHomePage> {
     final currentState = _gridKey.currentState?.getCurrentViewState();
     if (currentState != null) {
       final prefs = await SharedPreferences.getInstance();
-      final jsonString = currentState.toJsonString();
-      await prefs.setString('my_grid_view', jsonString);
-
-      if (!mounted) return;
-
-      setState(() {
-        _savedViewState = currentState;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('View saved to local storage!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      await prefs.setString('my_grid_view', currentState.toJsonString());
+      setState(() => _savedViewState = currentState);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('View saved!'), backgroundColor: Colors.green));
+      }
     }
   }
 
   void _restoreView() {
     if (_savedViewState != null) {
       _gridKey.currentState?.applyViewState(_savedViewState!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Restored saved view!'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No view saved to restore.'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
   Future<void> _clearSavedView() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('my_grid_view');
+    setState(() => _savedViewState = null);
+  }
 
-    if (!mounted) return;
+  // Mock Server Fetch
+  Future<PaginatedDataResponse<Map<String, dynamic>>> _mockServerFetch(DataGridFetchOptions options) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Tree Logic: Filter only visible nodes (roots + expanded children)
+    // In a real server, you'd probably return a slice of the visible tree.
+    List<Map<String, dynamic>> treeAwareData = [];
+    void addChildren(dynamic parentId) {
+      final children = _data.where((d) => d['parent'] == parentId).toList();
+      for (var child in children) {
+        treeAwareData.add(child);
+        if (options.expandedRowIds.contains(child['id'].toString())) {
+          addChildren(child['id']);
+        }
+      }
+    }
+    
+    if (_currentExampleIndex == 0) { // If it's a tree example
+      addChildren(null);
+    } else {
+      treeAwareData = List.from(_data);
+    }
 
-    setState(() {
-      _savedViewState = null;
+    // Calculate hasChildren for all returned items
+    final mappedData = treeAwareData.map((item) {
+      final itemId = item['id'].toString();
+      final hasChildren = _data.any((d) => d['parent'] == itemId);
+      return {...item, 'hasChildren': hasChildren};
+    }).toList();
+
+    var filteredData = mappedData;
+    
+    // Filtering
+    options.filters.forEach((colId, value) {
+      filteredData = filteredData.where((row) => 
+        row[colId].toString().toLowerCase().contains(value.toLowerCase())
+      ).toList();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Saved view cleared. Restart the app to see the default view.',
-        ),
-        backgroundColor: Colors.orange,
-      ),
+    
+    // Sorting
+    if (options.sortBy != null) {
+      filteredData.sort((a, b) {
+        int cmp = a[options.sortBy].toString().compareTo(b[options.sortBy].toString());
+        return options.sortAscending ? cmp : -cmp;
+      });
+    }
+    
+    // Pagination
+    final start = (options.page - 1) * options.pageSize;
+    final end = (start + options.pageSize).clamp(0, filteredData.length);
+    final pagedData = filteredData.sublist(start, end);
+    
+    return PaginatedDataResponse(
+      content: pagedData,
+      totalElements: filteredData.length,
+      totalPages: (filteredData.length / options.pageSize).ceil(),
+      last: options.page >= (filteredData.length / options.pageSize).ceil(),
+      first: options.page == 1,
+      size: options.pageSize,
+      number: options.page - 1,
+      numberOfElements: pagedData.length,
+      empty: pagedData.isEmpty,
     );
+  }
+
+  // Tree Processing for CustomDataTable (manual flattening)
+  List<Map<String, dynamic>> _buildFlatTree(List<Map<String, dynamic>> data, Set<String> expandedIds) {
+    if (_currentExampleIndex != 0) return data;
+    List<Map<String, dynamic>> result = [];
+    
+    void addChildren(String? parentId, int level, bool parentVisible, bool parentExpanded) {
+      final children = data.where((d) => d['parent'] == parentId).toList();
+      for (var child in children) {
+        final id = child['id'].toString();
+        final hasChildren = data.any((d) => d['parent'] == id);
+        final expanded = expandedIds.contains(id);
+        
+        final processed = Map<String, dynamic>.from(child);
+        processed['_indentationLevel'] = level;
+        processed['expanded'] = expanded;
+        processed['hasChildren'] = hasChildren;
+        processed['_isEffectivelyVisible'] = parentVisible && parentExpanded;
+        
+        result.add(processed);
+        addChildren(id, level + 1, processed['_isEffectivelyVisible'], expanded);
+      }
+    }
+    
+    addChildren(null, 0, true, true);
+    return result;
   }
 
   Widget _buildControlPanel() {
-    return Container(
-      color: Theme.of(context).cardColor,
+    return Drawer(
       child: ListView(
-        padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
             decoration: BoxDecoration(color: Theme.of(context).primaryColor),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Grid Settings',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-                IconButton(
-                  icon: Icon(
-                    _isDocked ? Icons.push_pin : Icons.push_pin_outlined,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isDocked = !_isDocked;
-                    });
-                    if (!_isDocked) {
-                      Navigator.of(context).pop(); // Close drawer if undocking
-                    }
-                  },
-                ),
-              ],
-            ),
+            child: const Text('Grid Settings', style: TextStyle(color: Colors.white, fontSize: 24)),
           ),
           ListTile(
-            title: const Text('Grid Type'),
+            title: const Text('Grid Implementation'),
             trailing: DropdownButton<int>(
               value: _currentGridTypeIndex,
               items: const [
-                DropdownMenuItem(value: 0, child: Text('UnifiedDataGrid')),
-                DropdownMenuItem(value: 1, child: Text('ClientSideDataGrid')),
-                DropdownMenuItem(value: 2, child: Text('ServerSideDataGrid')),
-                DropdownMenuItem(value: 3, child: Text('CustomDataTable')),
+                DropdownMenuItem(value: 0, child: Text('Unified')),
+                DropdownMenuItem(value: 1, child: Text('ClientSide')),
+                DropdownMenuItem(value: 2, child: Text('ServerSide')),
+                DropdownMenuItem(value: 3, child: Text('CustomTable')),
               ],
-              onChanged: (val) {
-                if (val != null) setState(() => _currentGridTypeIndex = val);
-              },
+              onChanged: (v) => setState(() => _currentGridTypeIndex = v!),
             ),
           ),
           ListTile(
-            title: const Text('Dataset'),
+            title: const Text('Dataset Type'),
             trailing: DropdownButton<int>(
               value: _currentExampleIndex,
               items: const [
-                DropdownMenuItem(value: 0, child: Text('Tree Grid')),
+                DropdownMenuItem(value: 0, child: Text('Tree Hierarchy')),
                 DropdownMenuItem(value: 1, child: Text('Flat List')),
               ],
-              onChanged: (val) {
-                if (val != null) setState(() => _currentExampleIndex = val);
+              onChanged: (v) {
+                setState(() {
+                  _currentExampleIndex = v!;
+                  _loadInitialData();
+                });
               },
             ),
           ),
           const Divider(),
-          SwitchListTile(
-            title: const Text('Allow Filtering'),
-            value: _allowFiltering,
-            onChanged: (val) => setState(() => _allowFiltering = val),
-          ),
-          SwitchListTile(
-            title: const Text('Allow Column Resize'),
-            value: _allowColumnResize,
-            onChanged: (val) => setState(() => _allowColumnResize = val),
-          ),
-          SwitchListTile(
-            title: const Text('Show Checkboxes'),
-            value: _showCheckboxColumn,
-            onChanged: (val) => setState(() => _showCheckboxColumn = val),
-          ),
-          SwitchListTile(
-            title: const Text('Show Footer'),
-            value: _showFooter,
-            onChanged: (val) => setState(() => _showFooter = val),
-          ),
-          SwitchListTile(
-            title: const Text('Use Available Width Dist.'),
-            value: _useAvailableWidthDistribution,
-            onChanged: (val) =>
-                setState(() => _useAvailableWidthDistribution = val),
-          ),
-          SwitchListTile(
-            title: const Text('Show Filter Border'),
-            value: _showFilterCellBorder,
-            onChanged: (val) => setState(() => _showFilterCellBorder = val),
-          ),
+          SwitchListTile(title: const Text('Dock Settings Drawer'), value: _isDocked, onChanged: (v) => setState(() => _isDocked = v)),
+          SwitchListTile(title: const Text('Allow Filtering'), value: _allowFiltering, onChanged: (v) => setState(() => _allowFiltering = v)),
+          SwitchListTile(title: const Text('Allow Sorting'), value: _allowSorting, onChanged: (v) => setState(() => _allowSorting = v)),
+          SwitchListTile(title: const Text('Allow Resize'), value: _allowColumnResize, onChanged: (v) => setState(() => _allowColumnResize = v)),
+          SwitchListTile(title: const Text('Show Checkboxes'), value: _showCheckboxColumn, onChanged: (v) => setState(() => _showCheckboxColumn = v)),
+          SwitchListTile(title: const Text('Show Footer'), value: _showFooter, onChanged: (v) => setState(() => _showFooter = v)),
           const Divider(),
-          _buildSlider(
-            'Header Height',
-            _headerHeight,
-            20,
-            100,
-            (val) => setState(() => _headerHeight = val),
-          ),
-          _buildSlider(
-            'Data Row Height',
-            _dataRowHeight,
-            20,
-            100,
-            (val) => setState(() => _dataRowHeight = val),
-          ),
-          _buildSlider(
-            'Filter Row Height',
-            _filterRowHeight,
-            20,
-            100,
-            (val) => setState(() => _filterRowHeight = val),
-          ),
-          _buildSlider(
-            'Scale',
-            _scale,
-            0.5,
-            2.0,
-            (val) => setState(() => _scale = val),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Text('Global Scale: ${_scale.toStringAsFixed(1)}'),
+                Slider(value: _scale, min: 0.5, max: 2.0, onChanged: (v) => setState(() => _scale = v)),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSlider(
-    String label,
-    value,
-    double min,
-    double max,
-    ValueChanged<double> onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$label: ${value.toStringAsFixed(1)}'),
-          Slider(value: value, min: min, max: max, onChanged: onChanged),
+  List<DataColumnDef> _buildColumnDefs() {
+    return [
+      DataColumnDef.reorder(),
+      DataColumnDef(id: 'name', caption: 'Name', flex: 1, isNameColumn: true, filterType: FilterType.string),
+      DataColumnDef(id: 'age', caption: 'Age', width: 80, filterType: FilterType.numeric),
+      DataColumnDef(
+        id: 'status',
+        caption: 'Status',
+        width: 100,
+        cellBuilder: (context, raw, display, scale, row) {
+          final color = display == 'active' ? Colors.green : (display == 'pending' ? Colors.orange : Colors.grey);
+          return Container(
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+            alignment: Alignment.center,
+            child: Text(display.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)),
+          );
+        }
+      ),
+      DataColumnDef.actions(
+        itemsBuilder: (context, row) => [
+          ContextMenuItem(caption: 'Edit', childContent: const Text('Edit'), onTap: () {}),
+          ContextMenuItem(caption: 'Delete', childContent: const Text('Delete'), onTap: () {}),
         ],
       ),
-    );
+    ];
+  }
+
+  bool _isAncestor(String potentialAncestorId, String targetId) {
+    try {
+      var current = _data.firstWhere((d) => d['id'] == targetId);
+      String? parentId = current['parent'];
+      while (parentId != null) {
+        if (parentId == potentialAncestorId) return true;
+        current = _data.firstWhere((d) => d['id'] == parentId);
+        parentId = current['parent'];
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  void _onReorder(String draggedId, String? targetId, bool isAfter) {
+    if (targetId != null && (draggedId == targetId || _isAncestor(draggedId, targetId))) {
+      return;
+    }
+
+    setState(() {
+      final oldIdx = _data.indexWhere((d) => d['id'] == draggedId);
+      if (oldIdx == -1) return;
+      final item = _data.removeAt(oldIdx);
+      if (targetId == null) {
+        _data.add(item);
+      } else {
+        var newIdx = _data.indexWhere((d) => d['id'] == targetId);
+        if (isAfter) newIdx++;
+        _data.insert(newIdx.clamp(0, _data.length), item);
+        final targetItem = _data.firstWhere((it) => it['id'] == targetId);
+        item['parent'] = targetItem['parent'];
+      }
+    });
+  }
+
+  void _onNest(String draggedId, String targetParentId) {
+    if (draggedId == targetParentId || _isAncestor(draggedId, targetParentId)) {
+      return;
+    }
+
+    setState(() {
+      final item = _data.firstWhere((d) => d['id'] == draggedId);
+      item['parent'] = targetParentId;
+      _expandedIds.add(targetParentId);
+    });
+    // For UnifiedDataGrid, also trigger the internal expansion
+    _gridKey.currentState?.expandRow(targetParentId);
+  }
+
+  Widget _buildDataGrid() {
+    final columnDefs = _buildColumnDefs();
+    
+    switch (_currentGridTypeIndex) {
+      case 1: // ClientSideDataGrid
+        return ClientSideDataGrid<Map<String, dynamic>>(
+          key: _gridKey,
+          data: _data,
+          columnDefs: columnDefs,
+          toMap: (i) => i,
+          rowIdKey: 'id',
+          isTree: _currentExampleIndex == 0,
+          parentIdKey: 'parent',
+          showCheckboxColumn: _showCheckboxColumn,
+          allowFiltering: _allowFiltering,
+          allowColumnResize: _allowColumnResize,
+          scale: _scale,
+          onSelectionChanged: (ids) => setState(() => _selectedIds = ids),
+          selectedRowIds: _selectedIds,
+          onReorder: _onReorder,
+          onNest: _onNest,
+          showFooter: _showFooter,
+        );
+      case 2: // ServerSideDataGrid
+        return ServerSideDataGrid<Map<String, dynamic>>(
+          key: _gridKey,
+          fetchData: _mockServerFetch,
+          columnDefs: columnDefs,
+          toMap: (i) => i,
+          rowIdKey: 'id',
+          isTree: _currentExampleIndex == 0,
+          parentIdKey: 'parent',
+          showCheckboxColumn: _showCheckboxColumn,
+          allowFiltering: _allowFiltering,
+          allowColumnResize: _allowColumnResize,
+          scale: _scale,
+          onSelectionChanged: (ids) => setState(() => _selectedIds = ids),
+          selectedRowIds: _selectedIds,
+          onReorder: _onReorder,
+          onNest: _onNest,
+        );
+      case 3: // CustomDataTable
+        final treeRows = _buildFlatTree(_data, _expandedIds);
+        final visibleRows = _currentExampleIndex == 0 
+            ? treeRows.where((r) => r['_isEffectivelyVisible'] == true).toList()
+            : _data;
+
+        return CustomDataTable(
+          columns: columnDefs,
+          rows: visibleRows,
+          rowIdKey: 'id',
+          isTree: _currentExampleIndex == 0,
+          onToggleExpansion: (rowId) {
+            setState(() {
+              if (_expandedIds.contains(rowId)) {
+                _expandedIds.remove(rowId);
+              } else {
+                _expandedIds.add(rowId);
+              }
+            });
+          },
+          indentationLevelKey: '_indentationLevel',
+          isEffectivelyVisibleKey: '_isEffectivelyVisible',
+          isExpandedKey: 'expanded',
+          hasChildrenKey: 'hasChildren',
+          showCheckboxColumn: _showCheckboxColumn,
+          allowFiltering: _allowFiltering,
+          allowColumnResize: _allowColumnResize,
+          scale: _scale,
+          onSelectionChanged: (ids) => setState(() => _selectedIds = ids),
+          selectedRowIds: _selectedIds,
+          onReorder: (oldIdx, newIdx) {
+            setState(() {
+              final item = _data.removeAt(oldIdx);
+              _data.insert(newIdx.clamp(0, _data.length), item);
+            });
+          },
+          onNest: (dragId, targetId) => _onNest(dragId, targetId),
+        );
+      case 0:
+      default: // UnifiedDataGrid
+        return UnifiedDataGrid<Map<String, dynamic>>(
+          key: _gridKey,
+          mode: DataGridMode.client,
+          clientData: _data,
+          columnDefs: columnDefs,
+          toMap: (item) => item,
+          rowIdKey: 'id',
+          isTree: _currentExampleIndex == 0,
+          parentIdKey: 'parent',
+          showCheckboxColumn: _showCheckboxColumn,
+          allowFiltering: _allowFiltering,
+          allowColumnResize: _allowColumnResize,
+          scale: _scale,
+          onSelectionChanged: (ids) => setState(() => _selectedIds = ids),
+          selectedRowIds: _selectedIds,
+          onReorder: _onReorder,
+          onNest: _onNest,
+          showFooter: _showFooter,
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final controlPanel = _buildControlPanel();
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(() {
-          switch (_currentGridTypeIndex) {
-            case 1:
-              return 'Client-Side Grid Demo';
-            case 2:
-              return 'Server-Side Grid Demo';
-            case 3:
-              return 'Custom Data Table Demo';
-            case 0:
-            default:
-              return 'Unified Data Grid Demo';
-          }
-        }()),
-        leading: _isDocked
-            ? IconButton(
-                icon: const Icon(Icons.menu_open),
-                onPressed: () => setState(() => _isDocked = false),
-              )
-            : null,
+        title: Text(_selectedIds.isEmpty ? 'Tree Grid Demo' : 'Selected: ${_selectedIds.length}'),
+        actions: [
+          if (_currentGridTypeIndex == 0) ...[
+            IconButton(icon: const Icon(Icons.save), onPressed: _saveView, tooltip: 'Save View'),
+            IconButton(icon: const Icon(Icons.restore), onPressed: _restoreView, tooltip: 'Restore View'),
+            IconButton(icon: const Icon(Icons.delete_sweep), onPressed: _clearSavedView, tooltip: 'Clear View'),
+          ],
+          IconButton(
+            icon: Icon(_isDocked ? Icons.push_pin : Icons.push_pin_outlined),
+            onPressed: () => setState(() => _isDocked = !_isDocked),
+          ),
+        ],
       ),
-      drawer: _isDocked ? null : Drawer(child: controlPanel),
+      drawer: _isDocked ? null : _buildControlPanel(),
       body: Row(
         children: [
-          if (_isDocked) SizedBox(width: 320, child: controlPanel),
+          if (_isDocked) SizedBox(width: 320, child: _buildControlPanel()),
           if (_isDocked) const VerticalDivider(width: 1, thickness: 1),
           Expanded(
-            child: _isLoadingView
-                ? const Center(child: CircularProgressIndicator())
-                : _buildDataGrid(),
+            child: _isLoadingView 
+              ? const Center(child: CircularProgressIndicator())
+              : _buildDataGrid(),
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildDataGrid() {
-    const flatData = [
-      {'id': '1', 'name': 'Item A', 'age': 45, 'status': 'active'},
-      {'id': '2', 'name': 'Item B', 'age': 32, 'status': 'inactive'},
-      {'id': '3', 'name': 'Item C', 'age': 28, 'status': 'pending'},
-    ];
-
-    final currentData = _currentExampleIndex == 0 ? _customTreeData : flatData;
-
-    final columns = [
-      DataColumnDef.actions(
-        id: 'actions',
-        width: 32,
-        showOnRowHover: true,
-        itemsBuilder: (context, rowData) => [
-          ContextMenuItem(
-            caption: 'Edit',
-            childContent: const Text('Edit'),
-            onTap: () {},
-          ),
-          ContextMenuItem(
-            caption: 'Delete',
-            childContent: const Text('Delete'),
-            onTap: () {},
-          ),
-        ],
-      ),
-      DataColumnDef(
-        id: 'name',
-        caption: 'Name',
-        flex: 1,
-        minWidth: 150,
-        isNameColumn: true,
-        filterType: FilterType.string,
-      ),
-      DataColumnDef(
-        id: 'age',
-        caption: 'Age',
-        width: 150,
-        minWidth: 150,
-        filterType: FilterType.numeric,
-      ),
-      DataColumnDef(
-        id: 'status',
-        caption: 'Status',
-        width: 150,
-        minWidth: 150,
-        cellBuilder: (context, rowData) {
-          final status = rowData['status'];
-          Color color;
-          switch (status) {
-            case 'active':
-              color = Colors.green;
-              break;
-            case 'inactive':
-              color = Colors.grey;
-              break;
-            case 'pending':
-              color = Colors.orange;
-              break;
-            default:
-              color = Colors.transparent;
-          }
-          return AbsorbPointer(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 3.0,
-                horizontal: 4.0,
-              ),
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 2.0,
-                  horizontal: 8.0,
-                ),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(color: getContrastingTextColor(color)),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    ];
-
-    final footerWidgets = [
-      (context) => Padding(
-        padding: const EdgeInsets.only(left: 8.0),
-        child: ElevatedButton.icon(
-          onPressed: _saveView,
-          icon: const Icon(Icons.save, size: 16),
-          label: const Text('Save View'),
-        ),
-      ),
-      (context) => Padding(
-        padding: const EdgeInsets.only(left: 8.0),
-        child: ElevatedButton.icon(
-          onPressed: _restoreView,
-          icon: const Icon(Icons.restore, size: 16),
-          label: const Text('Restore View'),
-        ),
-      ),
-      (context) => TextButton(
-        onPressed: _clearSavedView,
-        child: const Text('Clear Saved View'),
-      ),
-    ];
-
-    void handleRowTap(Map<String, dynamic> rowData) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tapped on row ID: ${rowData['id']}'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
-
-    switch (_currentGridTypeIndex) {
-      case 1:
-        return ClientSideDataGrid(
-          key: _gridKey,
-          headerHeight: _headerHeight,
-          dataRowHeight: _dataRowHeight,
-          filterRowHeight: _filterRowHeight,
-          allowFiltering: _allowFiltering,
-          allowColumnResize: _allowColumnResize,
-          showCheckboxColumn: _showCheckboxColumn,
-          showFooter: _showFooter,
-          useAvailableWidthDistribution: _useAvailableWidthDistribution,
-          showFilterCellBorder: _showFilterCellBorder,
-          scale: _scale,
-          onRowTap: handleRowTap,
-          data: currentData,
-          columnDefs: columns,
-          toMap: (item) => item,
-          footerLeadingWidgets: footerWidgets,
-          rowIdKey: 'id',
-          isTree: _currentExampleIndex == 0,
-          parentIdKey: _currentExampleIndex == 0 ? 'parent' : null,
-        );
-      case 2:
-        return ServerSideDataGrid(
-          key: _gridKey,
-          headerHeight: _headerHeight,
-          dataRowHeight: _dataRowHeight,
-          filterRowHeight: _filterRowHeight,
-          allowFiltering: _allowFiltering,
-          allowColumnResize: _allowColumnResize,
-          showCheckboxColumn: _showCheckboxColumn,
-          useAvailableWidthDistribution: _useAvailableWidthDistribution,
-          showFilterCellBorder: _showFilterCellBorder,
-          scale: _scale,
-          onRowTap: handleRowTap,
-          fetchData: (options) async {
-            // Mock network delay
-            await Future.delayed(const Duration(milliseconds: 500));
-            return PaginatedDataResponse(
-              content: currentData,
-              totalElements: currentData.length,
-              totalPages: 1,
-              first: true,
-              last: true,
-              size: 10,
-              number: 0,
-              numberOfElements: currentData.length,
-              empty: currentData.isEmpty,
-            );
-          },
-          columnDefs: columns,
-          toMap: (item) => item,
-          footerLeadingWidgets: footerWidgets,
-          rowIdKey: 'id',
-          isTree: _currentExampleIndex == 0,
-          parentIdKey: _currentExampleIndex == 0 ? 'parent' : null,
-        );
-      case 3:
-        return CustomDataTable(
-          rows: currentData,
-          columns: columns,
-          headerHeight: _headerHeight,
-          dataRowHeight: _dataRowHeight,
-          filterRowHeight: _filterRowHeight,
-          allowFiltering: _allowFiltering,
-          allowColumnResize: _allowColumnResize,
-          showCheckboxColumn: _showCheckboxColumn,
-          useAvailableWidthDistribution: _useAvailableWidthDistribution,
-          scale: _scale,
-          onRowTap: handleRowTap,
-          rowIdKey: 'id',
-          isTree: _currentExampleIndex == 0,
-          onToggleExpansion: _onToggleCustomTreeExpansion,
-          indentationLevelKey:
-              '__level', // Note: CustomDataTable expects pre-computed tree metadata
-          hasChildrenKey: '__isLeaf',
-          isExpandedKey: '__isExpanded',
-          isEffectivelyVisibleKey: '__isVisible',
-          selectedRowIds: const {},
-          onSelectionChanged: (selection) {},
-        );
-      case 0:
-      default:
-        return UnifiedDataGrid(
-          key: _gridKey,
-          headerHeight: _headerHeight,
-          dataRowHeight: _dataRowHeight,
-          filterRowHeight: _filterRowHeight,
-          allowFiltering: _allowFiltering,
-          allowColumnResize: _allowColumnResize,
-          showCheckboxColumn: _showCheckboxColumn,
-          showFooter: _showFooter,
-          useAvailableWidthDistribution: _useAvailableWidthDistribution,
-          showFilterCellBorder: _showFilterCellBorder,
-          scale: _scale,
-          initialViewState: _savedViewState,
-          onRowTap: handleRowTap,
-          mode: DataGridMode.client,
-          clientData: currentData,
-          columnDefs: columns,
-          toMap: (item) => item,
-          footerLeadingWidgets: footerWidgets,
-          rowIdKey: 'id',
-          isTree: _currentExampleIndex == 0,
-          parentIdKey: _currentExampleIndex == 0 ? 'parent' : null,
-        );
-    }
   }
 }

@@ -45,7 +45,8 @@ class ClientSideDataGrid<T> extends StatefulWidget {
   final Set<String>? selectedRowIds;
   final ValueChanged<Set<String>>? onSelectionChanged;
   final String? selectedRowId; // Re-added field
-  final void Function(int oldIndex, int newIndex)? onReorder; // Add this
+  final void Function(String draggedRowId, String? targetRowId, bool isAfter)? onReorder;
+  final void Function(String draggedRowId, String targetParentRowId)? onNest;
   final List<WidgetBuilder>? footerLeadingWidgets;
   final bool showFooter;
   final double scale;
@@ -88,7 +89,8 @@ class ClientSideDataGrid<T> extends StatefulWidget {
     this.initialExpandedRowIds,
     this.selectedRowIds,
     this.onSelectionChanged,
-    this.onReorder, // Add this
+    this.onReorder,
+    this.onNest,
     this.footerLeadingWidgets,
     this.showFooter = true,
     this.headerHeight = 56.0,
@@ -127,6 +129,10 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
     await _gridKey.currentState?.refresh();
   }
 
+  void expandRow(String rowId) => _gridKey.currentState?.expandRow(rowId);
+  void collapseRow(String rowId) => _gridKey.currentState?.collapseRow(rowId);
+  void setRowExpansion(String rowId, bool expanded) => _gridKey.currentState?.setRowExpansion(rowId, expanded);
+
   /// Public method to get the current grid view state.
   GridViewState? getCurrentViewState() {
     return _gridKey.currentState?.getCurrentViewState();
@@ -163,6 +169,7 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
           ? widget.selectedRowId
           : null,
       onReorder: widget.onReorder,
+      onNest: widget.onNest,
       // Tree & Selection properties
       isTree: widget.isTree,
       parentIdKey: widget.parentIdKey,

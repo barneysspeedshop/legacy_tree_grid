@@ -49,6 +49,8 @@ class ServerSideDataGrid<T> extends StatefulWidget {
   final Set<String>? initialExpandedRowIds;
   final String? isExpandedKey;
   final void Function(String rowId, bool isExpanded)? onRowToggle;
+  final void Function(String draggedRowId, String? targetRowId, bool isAfter)? onReorder;
+  final void Function(String draggedRowId, String targetParentRowId)? onNest;
   final double scale;
   final bool useAvailableWidthDistribution;
 
@@ -88,6 +90,8 @@ class ServerSideDataGrid<T> extends StatefulWidget {
     this.initialExpandedRowIds,
     this.isExpandedKey,
     this.onRowToggle,
+    this.onReorder,
+    this.onNest,
     this.scale = 1.0,
     this.useAvailableWidthDistribution = false,
   });
@@ -107,6 +111,10 @@ class ServerSideDataGridState<T> extends State<ServerSideDataGrid<T>> {
   Future<void> refresh() async {
     await _gridKey.currentState?.refresh();
   }
+
+  void expandRow(String rowId) => _gridKey.currentState?.expandRow(rowId);
+  void collapseRow(String rowId) => _gridKey.currentState?.collapseRow(rowId);
+  void setRowExpansion(String rowId, bool expanded) => _gridKey.currentState?.setRowExpansion(rowId, expanded);
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +155,8 @@ class ServerSideDataGridState<T> extends State<ServerSideDataGrid<T>> {
       initialExpandedRowIds: widget.initialExpandedRowIds,
       isExpandedKey: widget.isExpandedKey,
       onRowToggle: widget.onRowToggle,
+      onReorder: widget.onReorder,
+      onNest: widget.onNest,
       scale: widget.scale,
       useAvailableWidthDistribution: widget.useAvailableWidthDistribution,
     );

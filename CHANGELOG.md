@@ -1,3 +1,20 @@
+## 0.14.0
+
+### Features
+* **Programmatic Tree Control**: Exposed `expandRow`, `collapseRow`, and `setRowExpansion` on `ClientSideDataGrid` and `ServerSideDataGrid` via their state objects.
+* **Intelligent Auto-Expansion**: Target parent rows now automatically expand when a child is nested inside them during drag-and-drop.
+* **Server-Side Tree Support**: 
+    - `DataGridFetchOptions` now includes `expandedRowIds` for stateful server-side tree generation.
+    - Optimized "silent refreshes" for server-side grids to eliminate jarring full-grid loaders during tree navigation and reordering.
+    - Prioritized the `hasChildren` flag in data to support robust lazy-loading scenarios.
+* **Enhanced UX**: Restricted drag-and-drop interactions to dedicated handle columns for a more intentional and premium user experience.
+
+### Stability & Fixes
+* **Circular Nesting Protection**: Implemented robust ancestry checks to prevent disappearing rows caused by circular parent-child dependencies.
+* **Row ID Resolution**: Fixed a critical bug where reordering callbacks incorrectly passed row indices instead of unique identifiers.
+* **State Management**: Improved the synchronization of `indentationLevel` and `visibility` flags across all grid wrappers.
+* **Context Menu**: Restored and stabilized right-click `legacy_context_menu` support across all grid implementations.
+
 ## 0.13.1
 
 * **FIX**: Fix for an issue that prevented header alignment from being applied.
