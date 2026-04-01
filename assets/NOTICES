@@ -4896,9 +4896,7 @@ path_provider_linux
 path_provider_platform_interface
 path_provider_windows
 plugin_platform_interface
-shared_preferences
 shared_preferences_linux
-shared_preferences_platform_interface
 shared_preferences_web
 shared_preferences_windows
 xdg_directories
@@ -24913,8 +24911,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 --------------------------------------------------------------------------------
+shared_preferences
 shared_preferences_android
 shared_preferences_foundation
+shared_preferences_platform_interface
 
 Copyright 2013 The Flutter Authors
 
