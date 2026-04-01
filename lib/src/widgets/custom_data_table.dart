@@ -317,10 +317,36 @@ class _CustomDataTableState extends State<CustomDataTable> {
     }
 
     if (totalFlex > 0) {
-      double widthPerFlex = remainingWidth / totalFlex;
-      for (int i = 0; i < columnCount; i++) {
-        if (!isWidthFixed[i]) {
-          calculatedWidths[i] = (widget.columns[i].flex ?? 1) * widthPerFlex;
+      bool constraintsViolated = true;
+      while (constraintsViolated && totalFlex > 0) {
+        constraintsViolated = false;
+        double widthPerFlex = remainingWidth / totalFlex;
+
+        for (int i = 0; i < columnCount; i++) {
+          if (!isWidthFixed[i]) {
+            final col = widget.columns[i];
+            double flexWidth = (col.flex ?? 1) * widthPerFlex;
+            double min = col.minWidth * widget.scale;
+            double? max = col.maxWidth != null ? col.maxWidth! * widget.scale : null;
+
+            if (flexWidth < min) {
+              calculatedWidths[i] = min;
+              isWidthFixed[i] = true;
+              remainingWidth -= min;
+              totalFlex -= (col.flex ?? 1);
+              constraintsViolated = true;
+              break; // Restart calculation with updated remaining and flex
+            } else if (max != null && flexWidth > max) {
+              calculatedWidths[i] = max;
+              isWidthFixed[i] = true;
+              remainingWidth -= max;
+              totalFlex -= (col.flex ?? 1);
+              constraintsViolated = true;
+              break; // Restart calculation
+            } else {
+              calculatedWidths[i] = flexWidth;
+            }
+          }
         }
       }
     }
