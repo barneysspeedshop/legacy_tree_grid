@@ -77,7 +77,7 @@ class ClientSideDataGrid<T> extends StatefulWidget {
     this.onShowDeletedChanged,
     this.allowFiltering = true,
     this.scale = 1.0,
-    this.dataRowHeight = 32.0,
+    this.dataRowHeight = 25.0,
     this.allowColumnResize = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,

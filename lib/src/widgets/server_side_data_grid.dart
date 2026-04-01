@@ -76,7 +76,7 @@ class ServerSideDataGrid<T> extends StatefulWidget {
     this.isUndeleteMode = false,
     this.serverShowDeletedValue,
     this.onServerShowDeletedChanged,
-    this.dataRowHeight = 56.0,
+    this.dataRowHeight = 25.0,
     this.filterRowHeight,
     this.headerHeight = 56.0,
     this.allowFiltering = true,

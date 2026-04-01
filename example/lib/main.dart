@@ -38,13 +38,13 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<UnifiedDataGridState> _gridKey = GlobalKey<UnifiedDataGridState>();
-  
+
   List<Map<String, dynamic>> _data = [];
   Set<String> _selectedIds = {};
   final Set<String> _expandedIds = {};
   bool _isLoadingView = true;
   GridViewState? _savedViewState;
-  
+
   // Settings
   bool _isDocked = true;
   int _currentGridTypeIndex = 0; // 0: Unified, 1: Client, 2: Server, 3: Custom
@@ -74,13 +74,16 @@ class _MyHomePageState extends State<MyHomePage> {
         {'id': '6', 'name': 'Task 2.1', 'age': 35, 'status': 'active', 'parent': '5'},
       ];
     } else {
-      _data = List.generate(100, (i) => {
-        'id': (i + 1).toString(),
-        'name': 'User ${i + 1}',
-        'age': 20 + (i % 40),
-        'status': i % 3 == 0 ? 'active' : (i % 3 == 1 ? 'pending' : 'inactive'),
-        'parent': null,
-      });
+      _data = List.generate(
+        100,
+        (i) => {
+          'id': (i + 1).toString(),
+          'name': 'User ${i + 1}',
+          'age': 20 + (i % 40),
+          'status': i % 3 == 0 ? 'active' : (i % 3 == 1 ? 'pending' : 'inactive'),
+          'parent': null,
+        },
+      );
     }
   }
 
@@ -122,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // Mock Server Fetch
   Future<PaginatedDataResponse<Map<String, dynamic>>> _mockServerFetch(DataGridFetchOptions options) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     // Tree Logic: Filter only visible nodes (roots + expanded children)
     // In a real server, you'd probably return a slice of the visible tree.
     List<Map<String, dynamic>> treeAwareData = [];
@@ -135,8 +138,9 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     }
-    
-    if (_currentExampleIndex == 0) { // If it's a tree example
+
+    if (_currentExampleIndex == 0) {
+      // If it's a tree example
       addChildren(null);
     } else {
       treeAwareData = List.from(_data);
@@ -150,14 +154,12 @@ class _MyHomePageState extends State<MyHomePage> {
     }).toList();
 
     var filteredData = mappedData;
-    
+
     // Filtering
     options.filters.forEach((colId, value) {
-      filteredData = filteredData.where((row) => 
-        row[colId].toString().toLowerCase().contains(value.toLowerCase())
-      ).toList();
+      filteredData = filteredData.where((row) => row[colId].toString().toLowerCase().contains(value.toLowerCase())).toList();
     });
-    
+
     // Sorting
     if (options.sortBy != null) {
       filteredData.sort((a, b) {
@@ -165,12 +167,12 @@ class _MyHomePageState extends State<MyHomePage> {
         return options.sortAscending ? cmp : -cmp;
       });
     }
-    
+
     // Pagination
     final start = (options.page - 1) * options.pageSize;
     final end = (start + options.pageSize).clamp(0, filteredData.length);
     final pagedData = filteredData.sublist(start, end);
-    
+
     return PaginatedDataResponse(
       content: pagedData,
       totalElements: filteredData.length,
@@ -188,25 +190,25 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Map<String, dynamic>> _buildFlatTree(List<Map<String, dynamic>> data, Set<String> expandedIds) {
     if (_currentExampleIndex != 0) return data;
     List<Map<String, dynamic>> result = [];
-    
+
     void addChildren(String? parentId, int level, bool parentVisible, bool parentExpanded) {
       final children = data.where((d) => d['parent'] == parentId).toList();
       for (var child in children) {
         final id = child['id'].toString();
         final hasChildren = data.any((d) => d['parent'] == id);
         final expanded = expandedIds.contains(id);
-        
+
         final processed = Map<String, dynamic>.from(child);
         processed['_indentationLevel'] = level;
         processed['expanded'] = expanded;
         processed['hasChildren'] = hasChildren;
         processed['_isEffectivelyVisible'] = parentVisible && parentExpanded;
-        
+
         result.add(processed);
         addChildren(id, level + 1, processed['_isEffectivelyVisible'], expanded);
       }
     }
-    
+
     addChildren(null, 0, true, true);
     return result;
   }
@@ -273,6 +275,12 @@ class _MyHomePageState extends State<MyHomePage> {
   List<DataColumnDef> _buildColumnDefs() {
     return [
       DataColumnDef.reorder(),
+      DataColumnDef.actions(
+        itemsBuilder: (context, row) => [
+          ContextMenuItem(caption: 'Edit', childContent: const Text('Edit'), onTap: () {}),
+          ContextMenuItem(caption: 'Delete', childContent: const Text('Delete'), onTap: () {}),
+        ],
+      ),
       DataColumnDef(id: 'name', caption: 'Name', flex: 1, isNameColumn: true, filterType: FilterType.string),
       DataColumnDef(id: 'age', caption: 'Age', width: 80, filterType: FilterType.numeric),
       DataColumnDef(
@@ -287,13 +295,7 @@ class _MyHomePageState extends State<MyHomePage> {
             alignment: Alignment.center,
             child: Text(display.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)),
           );
-        }
-      ),
-      DataColumnDef.actions(
-        itemsBuilder: (context, row) => [
-          ContextMenuItem(caption: 'Edit', childContent: const Text('Edit'), onTap: () {}),
-          ContextMenuItem(caption: 'Delete', childContent: const Text('Delete'), onTap: () {}),
-        ],
+        },
       ),
     ];
   }
@@ -348,7 +350,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildDataGrid() {
     final columnDefs = _buildColumnDefs();
-    
+
     switch (_currentGridTypeIndex) {
       case 1: // ClientSideDataGrid
         return ClientSideDataGrid<Map<String, dynamic>>(
@@ -357,6 +359,7 @@ class _MyHomePageState extends State<MyHomePage> {
           columnDefs: columnDefs,
           toMap: (i) => i,
           rowIdKey: 'id',
+          headerHeight: 27,
           isTree: _currentExampleIndex == 0,
           parentIdKey: 'parent',
           showCheckboxColumn: _showCheckboxColumn,
@@ -376,6 +379,7 @@ class _MyHomePageState extends State<MyHomePage> {
           columnDefs: columnDefs,
           toMap: (i) => i,
           rowIdKey: 'id',
+          headerHeight: 27,
           isTree: _currentExampleIndex == 0,
           parentIdKey: 'parent',
           showCheckboxColumn: _showCheckboxColumn,
@@ -389,14 +393,13 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       case 3: // CustomDataTable
         final treeRows = _buildFlatTree(_data, _expandedIds);
-        final visibleRows = _currentExampleIndex == 0 
-            ? treeRows.where((r) => r['_isEffectivelyVisible'] == true).toList()
-            : _data;
+        final visibleRows = _currentExampleIndex == 0 ? treeRows.where((r) => r['_isEffectivelyVisible'] == true).toList() : _data;
 
         return CustomDataTable(
           columns: columnDefs,
           rows: visibleRows,
           rowIdKey: 'id',
+          headerHeight: 27,
           isTree: _currentExampleIndex == 0,
           onToggleExpansion: (rowId) {
             setState(() {
@@ -433,6 +436,7 @@ class _MyHomePageState extends State<MyHomePage> {
           clientData: _data,
           columnDefs: columnDefs,
           toMap: (item) => item,
+          headerHeight: 27,
           rowIdKey: 'id',
           isTree: _currentExampleIndex == 0,
           parentIdKey: 'parent',
@@ -460,10 +464,7 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(icon: const Icon(Icons.restore), onPressed: _restoreView, tooltip: 'Restore View'),
             IconButton(icon: const Icon(Icons.delete_sweep), onPressed: _clearSavedView, tooltip: 'Clear View'),
           ],
-          IconButton(
-            icon: Icon(_isDocked ? Icons.push_pin : Icons.push_pin_outlined),
-            onPressed: () => setState(() => _isDocked = !_isDocked),
-          ),
+          IconButton(icon: Icon(_isDocked ? Icons.push_pin : Icons.push_pin_outlined), onPressed: () => setState(() => _isDocked = !_isDocked)),
         ],
       ),
       drawer: _isDocked ? null : _buildControlPanel(),
@@ -471,11 +472,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           if (_isDocked) SizedBox(width: 320, child: _buildControlPanel()),
           if (_isDocked) const VerticalDivider(width: 1, thickness: 1),
-          Expanded(
-            child: _isLoadingView 
-              ? const Center(child: CircularProgressIndicator())
-              : _buildDataGrid(),
-          ),
+          Expanded(child: _isLoadingView ? const Center(child: CircularProgressIndicator()) : _buildDataGrid()),
         ],
       ),
     );

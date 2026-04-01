@@ -135,7 +135,7 @@ class UnifiedDataGrid<T> extends StatefulWidget {
     this.onReorder,
     this.onNest,
     this.scale = 1.0,
-    this.dataRowHeight = 56.0,
+    this.dataRowHeight = 25.0,
   }) : assert(!showDeletedToggle || isDeleted != null),
        assert(mode == DataGridMode.client ? (clientData == null || clientFetch == null) : true);
 
@@ -230,9 +230,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   }
 
   GridViewState getCurrentViewState() {
+    final defs = _getFinalColumnDefs();
+    final widths = _columnWidths.length == defs.length ? _columnWidths : List.filled(defs.length, 0.0);
     return GridViewState(
-      columnWidths: Map.fromIterables(_getFinalColumnDefs().map((c) => c.id), _columnWidths),
-      columnOrder: _getFinalColumnDefs().map((c) => c.id).toList(),
+      columnWidths: Map.fromIterables(defs.map((c) => c.id), widths),
+      columnOrder: defs.map((c) => c.id).toList(),
       filters: _filterValues,
       sortColumnId: _sortColumnId,
       sortAscending: _sortAscending,
@@ -327,6 +329,11 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
   void _updateSelection(Set<String> newSelection) {
     setState(() => _selectedRowIds = newSelection);
     widget.onSelectionChanged?.call(newSelection);
+  }
+
+  void _handleColumnWidthsChanged(List<double> newWidths) {
+    _columnWidths.clear();
+    _columnWidths.addAll(newWidths);
   }
 
   void expandRow(String rowId) => _onToggleExpansion(rowId, true);
@@ -492,6 +499,62 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     return current;
   }
 
+  Widget _buildFilterRow(BuildContext context, List<DataColumnDef> columns, List<double> columnWidths) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: List.generate(columns.length, (index) {
+        final col = columns[index];
+        final width = columnWidths[index];
+
+        if (!_filterControllers.containsKey(col.id)) {
+          _filterControllers[col.id] = TextEditingController(text: _filterValues[col.id]);
+        }
+        final controller = _filterControllers[col.id]!;
+
+        Widget filterWidget;
+        if (col.filterType == FilterType.none) {
+          filterWidget = const SizedBox.shrink();
+        } else {
+          filterWidget = Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.0 * widget.scale, vertical: 2.0 * widget.scale),
+            child: TextField(
+              controller: controller,
+              style: TextStyle(fontSize: 12.0 * widget.scale),
+              decoration: InputDecoration(
+                hintText: 'Filter ${col.caption}...',
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 8 * widget.scale, horizontal: 4 * widget.scale),
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                  setState(() {
+                    _filterValues[col.id] = value;
+                    if (widget.mode == DataGridMode.server) {
+                      _fetchDataFromServer(page: 1);
+                    }
+                  });
+                });
+              },
+            ),
+          );
+        }
+
+        return Row(
+          children: [
+            SizedBox(width: width, child: filterWidget),
+            VerticalDivider(
+              width: (widget.allowColumnResize && index < columns.length - 1 && col.resizable && columns[index + 1].resizable) ? 10.0 : 1.0,
+              thickness: 0.5,
+              color: widget.border?.verticalInside.color ?? Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            ),
+          ],
+        );
+      }).expand((w) => [w.children[0], w.children[1]]).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rows = _getDisplayRows();
@@ -507,6 +570,13 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                   columns: _getFinalColumnDefs(),
                   rows: visibleRows,
                   rowIdKey: widget.rowIdKey,
+                  dataRowHeight: widget.dataRowHeight,
+                  headerHeight: widget.headerHeight,
+                  filterRowHeight: widget.filterRowHeight,
+                  rowHeightBuilder: widget.rowHeightBuilder,
+                  border: widget.border,
+                  allowFiltering: widget.allowFiltering,
+                  filterRowBuilder: _buildFilterRow,
                   onRowTap: widget.onRowTap,
                   onRowDoubleTap: widget.onRowDoubleTap,
                   onSort: widget.allowSorting ? _handleSort : null,
@@ -518,6 +588,12 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
                   isTree: widget.isTree,
                   onToggleExpansion: _onToggleExpansion,
                   allowColumnResize: widget.allowColumnResize,
+                  onColumnWidthsChanged: _handleColumnWidthsChanged,
+                  headerTrailingWidgets: widget.headerTrailingWidgets,
+                  rowHoverColor: widget.rowHoverColor,
+                  useAvailableWidthDistribution: widget.useAvailableWidthDistribution,
+                  treeIconCollapsed: widget.treeIconCollapsed,
+                  treeIconExpanded: widget.treeIconExpanded,
                   onReorder: widget.onReorder != null ? (oldIdx, newIdx) => _handleReorder(oldIdx, newIdx) : null,
                   onNest: _handleNest,
                   indentationLevelKey: '_indentationLevel',

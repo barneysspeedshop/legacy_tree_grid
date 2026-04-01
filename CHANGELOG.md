@@ -1,3 +1,7 @@
+## 0.14.1
+
+* **FIX**: Fix for an issue that caused the header height to be ignored
+
 ## 0.14.0
 
 ### Features
