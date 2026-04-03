@@ -439,10 +439,13 @@ class _CustomDataTableState extends State<CustomDataTable> {
           Expanded(
             child: Column(
               children: [
-                SizedBox(height: widget.headerHeight * widget.scale, child: _buildHeader()),
+                Expanded(
+                  flex: (widget.headerHeight * 100).toInt(),
+                  child: _buildHeader(),
+                ),
                 if (widget.allowFiltering)
-                  SizedBox(
-                    height: (widget.filterRowHeight ?? widget.dataRowHeight) * widget.scale,
+                  Expanded(
+                    flex: ((widget.filterRowHeight ?? widget.dataRowHeight) * 100).toInt(),
                     child: _buildFilterRow(skipFirst: hasDragHandle),
                   ),
               ],
