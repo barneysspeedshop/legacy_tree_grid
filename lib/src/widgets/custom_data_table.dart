@@ -234,6 +234,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
   BoxConstraints? _lastConstraints;
   double? _lastScale;
   late final ScrollController _scrollController;
+  late final ScrollController _horizontalScrollController;
 
   static const double _checkboxColumnWidth = 32.0;
 
@@ -241,6 +242,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
   void initState() {
     super.initState();
     _scrollController = widget.scrollController ?? ScrollController();
+    _horizontalScrollController = ScrollController();
     if (widget.initialColumnWidths != null) {
       _columnWidths = List.from(widget.initialColumnWidths!);
       _widthsInitialized = true;
@@ -252,6 +254,7 @@ class _CustomDataTableState extends State<CustomDataTable> {
     if (widget.scrollController == null) {
       _scrollController.dispose();
     }
+    _horizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -356,6 +359,29 @@ class _CustomDataTableState extends State<CustomDataTable> {
       _widthsInitialized = true;
       widget.onColumnWidthsChanged?.call(calculatedWidths);
     });
+  }
+
+  double _getTotalWidth() {
+    if (!_widthsInitialized || _columnWidths.isEmpty) return 0.0;
+    double total = _columnWidths.reduce((a, b) => a + b);
+    if (widget.showCheckboxColumn) {
+      total += _checkboxColumnWidth;
+    }
+    // Add widths for dividers
+    double dividerTotalWidth = (widget.showCheckboxColumn ? 1.0 : 0.0) + 1.0;
+    if (widget.columns.length > 1) {
+      dividerTotalWidth += widget.columns
+          .sublist(0, widget.columns.length - 1)
+          .asMap()
+          .entries
+          .map((entry) {
+            final int index = entry.key;
+            final bool isDraggable = widget.allowColumnResize && widget.columns[index].resizable && widget.columns[index + 1].resizable;
+            return isDraggable ? 10.0 : 1.0;
+          })
+          .reduce((a, b) => a + b);
+    }
+    return total + dividerTotalWidth;
   }
 
   void _handleDragUpdate(DragUpdateDetails details, int columnIndex) {
@@ -547,30 +573,42 @@ class _CustomDataTableState extends State<CustomDataTable> {
         }
         if (!_widthsInitialized) return const SizedBox.shrink();
 
+        final double totalWidth = _getTotalWidth();
+
         return Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: true,
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SliverHeaderDelegate(
-                  height: (widget.headerHeight + (widget.allowFiltering ? (widget.filterRowHeight ?? widget.dataRowHeight) : 0)) * widget.scale + 1.0,
-                  child: Material(color: Theme.of(context).canvasColor, child: _buildMergedHeaderAndFilter()),
+          controller: _horizontalScrollController,
+          child: SingleChildScrollView(
+            controller: _horizontalScrollController,
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: totalWidth > constraints.maxWidth ? totalWidth : constraints.maxWidth,
+              child: Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _SliverHeaderDelegate(
+                        height: (widget.headerHeight + (widget.allowFiltering ? (widget.filterRowHeight ?? widget.dataRowHeight) : 0)) * widget.scale + 1.0,
+                        child: Material(color: Theme.of(context).canvasColor, child: _buildMergedHeaderAndFilter()),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.only(bottom: 60),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final rowData = widget.rows[index];
+                          final rowId = _extractValue(rowData, widget.rowIdKey!).toString();
+                          return KeyedSubtree(key: ValueKey(rowId), child: _buildRow(context, rowData, index, widget.rows));
+                        }, childCount: widget.rows.length),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.only(bottom: 60),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final rowData = widget.rows[index];
-                    final rowId = _extractValue(rowData, widget.rowIdKey!).toString();
-                    return KeyedSubtree(key: ValueKey(rowId), child: _buildRow(context, rowData, index, widget.rows));
-                  }, childCount: widget.rows.length),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },

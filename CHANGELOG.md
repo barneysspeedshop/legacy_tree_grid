@@ -1,3 +1,7 @@
+## 0.14.3
+
+* **FIX**: Fix for an issue that caused horizontal overflow. 
+
 ## 0.14.2
 
 * **FIX**: Fix for an issue that caused the header height to overflow by 1px in customDataTable.
