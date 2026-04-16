@@ -1,3 +1,7 @@
+## 0.14.4
+
+* **FIX**: Stabilized tree expansion state synchronization in `UnifiedDataGrid`. This ensures the grid correctly reacts to external changes in `initialExpandedRowIds` even after the initial build, which is essential for multi-client synchronization.
+
 ## 0.14.3
 
 * **FIX**: Fix for an issue that caused horizontal overflow. 

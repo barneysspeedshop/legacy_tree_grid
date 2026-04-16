@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:legacy_tree_grid/src/models/data_grid_footer_data.dart';
 import 'package:legacy_tree_grid/src/models/grid_view_state.dart';
+import 'package:flutter/foundation.dart' show listEquals, setEquals;
 import 'package:flutter/material.dart';
 export 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
@@ -210,6 +211,14 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
     }
     if (widget.mode == DataGridMode.client && widget.clientData != null) {
       _setDataFromWidget(clearSelection: false);
+    }
+
+    // Sync expansion state from the parent's initialExpandedRowIds.
+    // This is required to keep the grid in sync with remote operations.
+    if (widget.isTree && !setEquals(widget.initialExpandedRowIds, oldWidget.initialExpandedRowIds)) {
+      setState(() {
+        _expandedRowIds = widget.initialExpandedRowIds != null ? Set.from(widget.initialExpandedRowIds!) : {};
+      });
     }
   }
 
