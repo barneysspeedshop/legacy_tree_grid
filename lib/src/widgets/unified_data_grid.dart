@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:legacy_tree_grid/src/models/data_grid_footer_data.dart';
 import 'package:legacy_tree_grid/src/models/grid_view_state.dart';
-import 'package:flutter/foundation.dart' show listEquals, setEquals;
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 export 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
@@ -479,12 +479,12 @@ class UnifiedDataGridState<T> extends State<UnifiedDataGrid<T>> {
         final serverHasChildren = child[widget.hasChildrenKey ?? 'hasChildren'];
         final hasChildren = serverHasChildren is bool ? serverHasChildren : flatData.any((d) => d[widget.parentIdKey] == id);
         final expanded = _expandedRowIds.contains(id);
-        
+
         child['_indentationLevel'] = level;
         child[widget.isExpandedKey ?? 'expanded'] = expanded;
         child[widget.hasChildrenKey ?? 'hasChildren'] = hasChildren;
         child['_isEffectivelyVisible'] = parentVisible;
-        
+
         tree.add(child);
         addChildren(id, level + 1, parentVisible && expanded);
       }
