@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:legacy_tree_grid/legacy_tree_grid.dart';
 import 'package:legacy_context_menu/legacy_context_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +16,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Legacy Tree Grid Demo',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      // legacy_context_menu still reads framework Material theme data.
+      // ignore: deprecated_member_use
+      builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
         useMaterial3: true,

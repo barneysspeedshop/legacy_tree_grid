@@ -1,3 +1,8 @@
+## 0.15.0
+
+* **BREAKING**: Migrate Material widgets and theme types to the official `material_ui` package. Require Dart 3.13 and Flutter 3.47 or newer.
+* The example app uses `MaterialUiCompatibilityBridge` for the legacy `legacy_context_menu` dependency.
+
 ## 0.14.4
 
 * **FIX**: Stabilized tree expansion state synchronization in `UnifiedDataGrid`. This ensures the grid correctly reacts to external changes in `initialExpandedRowIds` even after the initial build, which is essential for multi-client synchronization.

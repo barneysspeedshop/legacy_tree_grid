@@ -1,5 +1,6 @@
 // lib/providers/scale_notifier.dart
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:flutter/widgets.dart' show Intent;
 
 class ScaleNotifier extends ChangeNotifier {
   double _scale = 0.85;

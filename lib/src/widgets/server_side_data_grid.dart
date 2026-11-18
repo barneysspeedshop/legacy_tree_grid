@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:legacy_tree_grid/src/widgets/unified_data_grid.dart';
 export 'package:legacy_tree_grid/src/widgets/unified_data_grid.dart'
     show DataColumnDef, FilterType, ItemToMap;

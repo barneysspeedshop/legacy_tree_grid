@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:legacy_tree_grid/src/models/data_grid_footer_data.dart';
 import 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:flutter/foundation.dart' show setEquals;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 export 'package:legacy_tree_grid/src/models/grid_view_state.dart';
 import 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';
 export 'package:legacy_tree_grid/src/models/data_grid_fetch_options.dart';

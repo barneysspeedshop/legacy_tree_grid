@@ -1,16 +1,17 @@
 name: legacy_tree_grid
 description: "Display, filter, sort, select, and edit tabular data in a tree grid."
-version: 0.14.4
+version: 0.15.0
 repository: https://github.com/barneysspeedshop/legacy_tree_grid
 screenshots:
   - description: "A screenshot of the legacy_tree_grid in action."
     path: assets/screenshot.png
 
 environment:
-  sdk: ^3.10.0
-  flutter: ">=1.17.0"
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 dependencies:
+  material_ui: ^1.11.1
   flutter:
     sdk: flutter
   legacy_context_menu: ^2.1.2
