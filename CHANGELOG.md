@@ -1,3 +1,12 @@
+## 0.15.1
+
+* Require standalone Material context menu 3.0.0 in the package itself, matching the migrated example and public menu-item types.
+
+## 0.15.0
+
+* **BREAKING**: Migrate Material widgets and theme types to the official `material_ui` package. Require Dart 3.13 and Flutter 3.47 or newer.
+* The example uses standalone Material context menu 3.0.0 directly, without a compatibility bridge.
+
 ## 0.14.4
 
 * **FIX**: Stabilized tree expansion state synchronization in `UnifiedDataGrid`. This ensures the grid correctly reacts to external changes in `initialExpandedRowIds` even after the initial build, which is essential for multi-client synchronization.

@@ -6,12 +6,14 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.10.0-75.1.beta <4.0.0'
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  legacy_context_menu: ^2.1.2
+  material_ui: ^1.11.1
+  legacy_context_menu: ^3.0.0
   legacy_tree_grid:
     path: ../
   shared_preferences: ^2.5.3

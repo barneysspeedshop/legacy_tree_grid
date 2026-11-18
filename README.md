@@ -38,7 +38,8 @@ Add the `legacy_tree_grid` package to your `pubspec.yaml` file.
 
 ```yaml
 dependencies:
-  legacy_tree_grid: ^0.0.1 # Replace with the latest version
+  legacy_tree_grid: ^0.15.0
+  material_ui: ^1.11.1
 ```
 
 Then, run `flutter pub get` and import the package in your Dart file:
@@ -52,7 +53,7 @@ import 'package:legacy_tree_grid/legacy_tree_grid.dart';
 Here is a complete example of a `ClientSideDataGrid` configured as a tree grid.
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:legacy_tree_grid/legacy_tree_grid.dart';
 
 // 1. Define your data model
@@ -125,6 +126,10 @@ class MyTreeGridPage extends StatelessWidget {
   }
 }
 ```
+
+## Material UI migration
+
+Version 0.15.0 is a breaking release for Flutter 3.47 and later. It requires Dart 3.13 or newer and uses the official `material_ui: ^1.11.1` package for Material widgets and theme types. Update application imports from `package:flutter/material.dart` to `package:material_ui/material_ui.dart`. Applications that still use `legacy_context_menu` should wrap the `MaterialApp` child with `MaterialUiCompatibilityBridge` and set `localizationsDelegates` to `GlobalMaterialLocalizations.delegates` during the transition. The bridge provides runtime theme and localization data; it cannot convert legacy and `material_ui` types passed through public API signatures.
 
 ## Additional Information
 

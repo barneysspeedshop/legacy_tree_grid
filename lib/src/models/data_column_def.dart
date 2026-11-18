@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:legacy_context_menu/legacy_context_menu.dart';
 
 /// Defines the type of filtering to apply to a column.

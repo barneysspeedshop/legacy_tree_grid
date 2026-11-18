@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 /// A data class that provides all the necessary information and callbacks
 /// for building a custom data grid footer.

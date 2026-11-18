@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:legacy_tree_grid/src/utils/color_utils.dart';
 import 'package:legacy_tree_grid/src/models/data_column_def.dart';
 import 'package:legacy_context_menu/legacy_context_menu.dart';
