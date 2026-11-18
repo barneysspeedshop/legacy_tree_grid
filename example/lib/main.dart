@@ -17,9 +17,6 @@ class MyApp extends StatelessWidget {
       title: 'Legacy Tree Grid Demo',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      // legacy_context_menu still reads framework Material theme data.
-      // ignore: deprecated_member_use
-      builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
         useMaterial3: true,

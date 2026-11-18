@@ -1,7 +1,7 @@
 ## 0.15.0
 
 * **BREAKING**: Migrate Material widgets and theme types to the official `material_ui` package. Require Dart 3.13 and Flutter 3.47 or newer.
-* The example app uses `MaterialUiCompatibilityBridge` for the legacy `legacy_context_menu` dependency.
+* The example uses standalone Material context menu 3.0.0 directly, without a compatibility bridge.
 
 ## 0.14.4
 

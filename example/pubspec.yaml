@@ -13,7 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   material_ui: ^1.11.1
-  legacy_context_menu: ^2.1.2
+  legacy_context_menu: ^3.0.0
   legacy_tree_grid:
     path: ../
   shared_preferences: ^2.5.3

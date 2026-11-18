@@ -35,3 +35,6 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 /build/
 /coverage/
+
+# Local coordinated-release overrides.
+**/pubspec_overrides.yaml
