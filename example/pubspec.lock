@@ -136,9 +136,10 @@ packages:
   legacy_context_menu:
     dependency: "direct main"
     description:
-      path: "../../legacy_context_menu"
-      relative: true
-    source: path
+      name: legacy_context_menu
+      sha256: "8e851b71b4d7bdf5dbf612a16d103a5e5cab6b1caf714f0f04749705d906ca94"
+      url: "https://pub.dev"
+    source: hosted
     version: "3.0.0"
   legacy_tree_grid:
     dependency: "direct main"
@@ -146,7 +147,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.15.0"
+    version: "0.15.1"
   lints:
     dependency: transitive
     description:

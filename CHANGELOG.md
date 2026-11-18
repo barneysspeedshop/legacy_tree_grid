@@ -1,3 +1,7 @@
+## 0.15.1
+
+* Require standalone Material context menu 3.0.0 in the package itself, matching the migrated example and public menu-item types.
+
 ## 0.15.0
 
 * **BREAKING**: Migrate Material widgets and theme types to the official `material_ui` package. Require Dart 3.13 and Flutter 3.47 or newer.
