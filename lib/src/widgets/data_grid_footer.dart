@@ -227,20 +227,30 @@ class _DataGridFooterState extends State<DataGridFooter> {
         icon: Icons.first_page,
         tooltip: 'First Page',
         menuText: 'First Page',
-        onPressed: widget.currentPage > 1 ? (widget.onPageChanged != null ? () => widget.onPageChanged!(1) : widget.onFirstPage) : null,
+        onPressed: widget.currentPage > 1
+            ? (widget.onPageChanged != null
+                  ? () => widget.onPageChanged!(1)
+                  : widget.onFirstPage)
+            : null,
       );
       prevPageAction = _FooterAction(
         icon: Icons.chevron_left,
         tooltip: 'Previous Page',
         menuText: 'Previous Page',
-        onPressed: widget.currentPage > 1 ? (widget.onPageChanged != null ? () => widget.onPageChanged!(widget.currentPage - 1) : widget.onPreviousPage) : null,
+        onPressed: widget.currentPage > 1
+            ? (widget.onPageChanged != null
+                  ? () => widget.onPageChanged!(widget.currentPage - 1)
+                  : widget.onPreviousPage)
+            : null,
       );
       nextPageAction = _FooterAction(
         icon: Icons.chevron_right,
         tooltip: 'Next Page',
         menuText: 'Next Page',
         onPressed: widget.currentPage < widget.totalPages!
-            ? (widget.onPageChanged != null ? () => widget.onPageChanged!(widget.currentPage + 1) : widget.onNextPage)
+            ? (widget.onPageChanged != null
+                  ? () => widget.onPageChanged!(widget.currentPage + 1)
+                  : widget.onNextPage)
             : null,
       );
       lastPageAction = _FooterAction(
@@ -248,7 +258,9 @@ class _DataGridFooterState extends State<DataGridFooter> {
         tooltip: 'Last Page',
         menuText: 'Last Page',
         onPressed: widget.currentPage < widget.totalPages!
-            ? (widget.onPageChanged != null ? () => widget.onPageChanged!(widget.totalPages!) : widget.onLastPage)
+            ? (widget.onPageChanged != null
+                  ? () => widget.onPageChanged!(widget.totalPages!)
+                  : widget.onLastPage)
             : null,
       );
     }

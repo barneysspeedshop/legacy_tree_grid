@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 import 'unified_data_grid.dart';
 export 'unified_data_grid.dart'
     show DataColumnDef, FilterType, ItemToMap, IsItemDeleted;
@@ -45,7 +46,8 @@ class ClientSideDataGrid<T> extends StatefulWidget {
   final Set<String>? selectedRowIds;
   final ValueChanged<Set<String>>? onSelectionChanged;
   final String? selectedRowId; // Re-added field
-  final void Function(String draggedRowId, String? targetRowId, bool isAfter)? onReorder;
+  final void Function(String draggedRowId, String? targetRowId, bool isAfter)?
+  onReorder;
   final void Function(String draggedRowId, String targetParentRowId)? onNest;
   final List<WidgetBuilder>? footerLeadingWidgets;
   final bool showFooter;
@@ -131,7 +133,8 @@ class ClientSideDataGridState<T> extends State<ClientSideDataGrid<T>> {
 
   void expandRow(String rowId) => _gridKey.currentState?.expandRow(rowId);
   void collapseRow(String rowId) => _gridKey.currentState?.collapseRow(rowId);
-  void setRowExpansion(String rowId, bool expanded) => _gridKey.currentState?.setRowExpansion(rowId, expanded);
+  void setRowExpansion(String rowId, bool expanded) =>
+      _gridKey.currentState?.setRowExpansion(rowId, expanded);
 
   /// Public method to get the current grid view state.
   GridViewState? getCurrentViewState() {

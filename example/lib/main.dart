@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:legacy_tree_grid/legacy_tree_grid.dart';
 import 'package:legacy_context_menu/legacy_context_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'dart:async';
 
 void main() {
@@ -18,11 +19,17 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
       ),
       home: const MyHomePage(),
@@ -38,7 +45,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final GlobalKey<UnifiedDataGridState> _gridKey = GlobalKey<UnifiedDataGridState>();
+  final GlobalKey<UnifiedDataGridState> _gridKey =
+      GlobalKey<UnifiedDataGridState>();
 
   List<Map<String, dynamic>> _data = [];
   Set<String> _selectedIds = {};
@@ -67,12 +75,48 @@ class _MyHomePageState extends State<MyHomePage> {
   void _loadInitialData() {
     if (_currentExampleIndex == 0) {
       _data = [
-        {'id': '1', 'name': 'Project Alpha', 'age': 45, 'status': 'active', 'parent': null},
-        {'id': '2', 'name': 'Task 1.1', 'age': 25, 'status': 'active', 'parent': '1'},
-        {'id': '3', 'name': 'Task 1.2', 'age': 30, 'status': 'pending', 'parent': '1'},
-        {'id': '4', 'name': 'Subtask 1.2.1', 'age': 20, 'status': 'active', 'parent': '3'},
-        {'id': '5', 'name': 'Project Beta', 'age': 50, 'status': 'inactive', 'parent': null},
-        {'id': '6', 'name': 'Task 2.1', 'age': 35, 'status': 'active', 'parent': '5'},
+        {
+          'id': '1',
+          'name': 'Project Alpha',
+          'age': 45,
+          'status': 'active',
+          'parent': null,
+        },
+        {
+          'id': '2',
+          'name': 'Task 1.1',
+          'age': 25,
+          'status': 'active',
+          'parent': '1',
+        },
+        {
+          'id': '3',
+          'name': 'Task 1.2',
+          'age': 30,
+          'status': 'pending',
+          'parent': '1',
+        },
+        {
+          'id': '4',
+          'name': 'Subtask 1.2.1',
+          'age': 20,
+          'status': 'active',
+          'parent': '3',
+        },
+        {
+          'id': '5',
+          'name': 'Project Beta',
+          'age': 50,
+          'status': 'inactive',
+          'parent': null,
+        },
+        {
+          'id': '6',
+          'name': 'Task 2.1',
+          'age': 35,
+          'status': 'active',
+          'parent': '5',
+        },
       ];
     } else {
       _data = List.generate(
@@ -81,7 +125,9 @@ class _MyHomePageState extends State<MyHomePage> {
           'id': (i + 1).toString(),
           'name': 'User ${i + 1}',
           'age': 20 + (i % 40),
-          'status': i % 3 == 0 ? 'active' : (i % 3 == 1 ? 'pending' : 'inactive'),
+          'status': i % 3 == 0
+              ? 'active'
+              : (i % 3 == 1 ? 'pending' : 'inactive'),
           'parent': null,
         },
       );
@@ -106,7 +152,12 @@ class _MyHomePageState extends State<MyHomePage> {
       await prefs.setString('my_grid_view', currentState.toJsonString());
       setState(() => _savedViewState = currentState);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('View saved!'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('View saved!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     }
   }
@@ -124,7 +175,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // Mock Server Fetch
-  Future<PaginatedDataResponse<Map<String, dynamic>>> _mockServerFetch(DataGridFetchOptions options) async {
+  Future<PaginatedDataResponse<Map<String, dynamic>>> _mockServerFetch(
+    DataGridFetchOptions options,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 500));
 
     // Tree Logic: Filter only visible nodes (roots + expanded children)
@@ -158,13 +211,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Filtering
     options.filters.forEach((colId, value) {
-      filteredData = filteredData.where((row) => row[colId].toString().toLowerCase().contains(value.toLowerCase())).toList();
+      filteredData = filteredData
+          .where(
+            (row) => row[colId].toString().toLowerCase().contains(
+              value.toLowerCase(),
+            ),
+          )
+          .toList();
     });
 
     // Sorting
     if (options.sortBy != null) {
       filteredData.sort((a, b) {
-        int cmp = a[options.sortBy].toString().compareTo(b[options.sortBy].toString());
+        int cmp = a[options.sortBy].toString().compareTo(
+          b[options.sortBy].toString(),
+        );
         return options.sortAscending ? cmp : -cmp;
       });
     }
@@ -188,11 +249,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // Tree Processing for CustomDataTable (manual flattening)
-  List<Map<String, dynamic>> _buildFlatTree(List<Map<String, dynamic>> data, Set<String> expandedIds) {
+  List<Map<String, dynamic>> _buildFlatTree(
+    List<Map<String, dynamic>> data,
+    Set<String> expandedIds,
+  ) {
     if (_currentExampleIndex != 0) return data;
     List<Map<String, dynamic>> result = [];
 
-    void addChildren(String? parentId, int level, bool parentVisible, bool parentExpanded) {
+    void addChildren(
+      String? parentId,
+      int level,
+      bool parentVisible,
+      bool parentExpanded,
+    ) {
       final children = data.where((d) => d['parent'] == parentId).toList();
       for (var child in children) {
         final id = child['id'].toString();
@@ -206,7 +275,12 @@ class _MyHomePageState extends State<MyHomePage> {
         processed['_isEffectivelyVisible'] = parentVisible && parentExpanded;
 
         result.add(processed);
-        addChildren(id, level + 1, processed['_isEffectivelyVisible'], expanded);
+        addChildren(
+          id,
+          level + 1,
+          processed['_isEffectivelyVisible'],
+          expanded,
+        );
       }
     }
 
@@ -220,7 +294,10 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           DrawerHeader(
             decoration: BoxDecoration(color: Theme.of(context).primaryColor),
-            child: const Text('Grid Settings', style: TextStyle(color: Colors.white, fontSize: 24)),
+            child: const Text(
+              'Grid Settings',
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
           ),
           ListTile(
             title: const Text('Grid Implementation'),
@@ -252,19 +329,48 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           const Divider(),
-          SwitchListTile(title: const Text('Dock Settings Drawer'), value: _isDocked, onChanged: (v) => setState(() => _isDocked = v)),
-          SwitchListTile(title: const Text('Allow Filtering'), value: _allowFiltering, onChanged: (v) => setState(() => _allowFiltering = v)),
-          SwitchListTile(title: const Text('Allow Sorting'), value: _allowSorting, onChanged: (v) => setState(() => _allowSorting = v)),
-          SwitchListTile(title: const Text('Allow Resize'), value: _allowColumnResize, onChanged: (v) => setState(() => _allowColumnResize = v)),
-          SwitchListTile(title: const Text('Show Checkboxes'), value: _showCheckboxColumn, onChanged: (v) => setState(() => _showCheckboxColumn = v)),
-          SwitchListTile(title: const Text('Show Footer'), value: _showFooter, onChanged: (v) => setState(() => _showFooter = v)),
+          SwitchListTile(
+            title: const Text('Dock Settings Drawer'),
+            value: _isDocked,
+            onChanged: (v) => setState(() => _isDocked = v),
+          ),
+          SwitchListTile(
+            title: const Text('Allow Filtering'),
+            value: _allowFiltering,
+            onChanged: (v) => setState(() => _allowFiltering = v),
+          ),
+          SwitchListTile(
+            title: const Text('Allow Sorting'),
+            value: _allowSorting,
+            onChanged: (v) => setState(() => _allowSorting = v),
+          ),
+          SwitchListTile(
+            title: const Text('Allow Resize'),
+            value: _allowColumnResize,
+            onChanged: (v) => setState(() => _allowColumnResize = v),
+          ),
+          SwitchListTile(
+            title: const Text('Show Checkboxes'),
+            value: _showCheckboxColumn,
+            onChanged: (v) => setState(() => _showCheckboxColumn = v),
+          ),
+          SwitchListTile(
+            title: const Text('Show Footer'),
+            value: _showFooter,
+            onChanged: (v) => setState(() => _showFooter = v),
+          ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 Text('Global Scale: ${_scale.toStringAsFixed(1)}'),
-                Slider(value: _scale, min: 0.5, max: 2.0, onChanged: (v) => setState(() => _scale = v)),
+                Slider(
+                  value: _scale,
+                  min: 0.5,
+                  max: 2.0,
+                  onChanged: (v) => setState(() => _scale = v),
+                ),
               ],
             ),
           ),
@@ -278,23 +384,50 @@ class _MyHomePageState extends State<MyHomePage> {
       DataColumnDef.reorder(),
       DataColumnDef.actions(
         itemsBuilder: (context, row) => [
-          ContextMenuItem(caption: 'Edit', childContent: const Text('Edit'), onTap: () {}),
-          ContextMenuItem(caption: 'Delete', childContent: const Text('Delete'), onTap: () {}),
+          ContextMenuItem(
+            caption: 'Edit',
+            childContent: const Text('Edit'),
+            onTap: () {},
+          ),
+          ContextMenuItem(
+            caption: 'Delete',
+            childContent: const Text('Delete'),
+            onTap: () {},
+          ),
         ],
       ),
-      DataColumnDef(id: 'name', caption: 'Name', flex: 1, isNameColumn: true, filterType: FilterType.string),
-      DataColumnDef(id: 'age', caption: 'Age', width: 80, filterType: FilterType.numeric),
+      DataColumnDef(
+        id: 'name',
+        caption: 'Name',
+        flex: 1,
+        isNameColumn: true,
+        filterType: FilterType.string,
+      ),
+      DataColumnDef(
+        id: 'age',
+        caption: 'Age',
+        width: 80,
+        filterType: FilterType.numeric,
+      ),
       DataColumnDef(
         id: 'status',
         caption: 'Status',
         width: 100,
         cellBuilder: (context, raw, display, scale, row) {
-          final color = display == 'active' ? Colors.green : (display == 'pending' ? Colors.orange : Colors.grey);
+          final color = display == 'active'
+              ? Colors.green
+              : (display == 'pending' ? Colors.orange : Colors.grey);
           return Container(
             margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
             alignment: Alignment.center,
-            child: Text(display.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)),
+            child: Text(
+              display.toString(),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
           );
         },
       ),
@@ -315,7 +448,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _onReorder(String draggedId, String? targetId, bool isAfter) {
-    if (targetId != null && (draggedId == targetId || _isAncestor(draggedId, targetId))) {
+    if (targetId != null &&
+        (draggedId == targetId || _isAncestor(draggedId, targetId))) {
       return;
     }
 
@@ -394,7 +528,9 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       case 3: // CustomDataTable
         final treeRows = _buildFlatTree(_data, _expandedIds);
-        final visibleRows = _currentExampleIndex == 0 ? treeRows.where((r) => r['_isEffectivelyVisible'] == true).toList() : _data;
+        final visibleRows = _currentExampleIndex == 0
+            ? treeRows.where((r) => r['_isEffectivelyVisible'] == true).toList()
+            : _data;
 
         return CustomDataTable(
           columns: columnDefs,
@@ -458,14 +594,33 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedIds.isEmpty ? 'Tree Grid Demo' : 'Selected: ${_selectedIds.length}'),
+        title: Text(
+          _selectedIds.isEmpty
+              ? 'Tree Grid Demo'
+              : 'Selected: ${_selectedIds.length}',
+        ),
         actions: [
           if (_currentGridTypeIndex == 0) ...[
-            IconButton(icon: const Icon(Icons.save), onPressed: _saveView, tooltip: 'Save View'),
-            IconButton(icon: const Icon(Icons.restore), onPressed: _restoreView, tooltip: 'Restore View'),
-            IconButton(icon: const Icon(Icons.delete_sweep), onPressed: _clearSavedView, tooltip: 'Clear View'),
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveView,
+              tooltip: 'Save View',
+            ),
+            IconButton(
+              icon: const Icon(Icons.restore),
+              onPressed: _restoreView,
+              tooltip: 'Restore View',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_sweep),
+              onPressed: _clearSavedView,
+              tooltip: 'Clear View',
+            ),
           ],
-          IconButton(icon: Icon(_isDocked ? Icons.push_pin : Icons.push_pin_outlined), onPressed: () => setState(() => _isDocked = !_isDocked)),
+          IconButton(
+            icon: Icon(_isDocked ? Icons.push_pin : Icons.push_pin_outlined),
+            onPressed: () => setState(() => _isDocked = !_isDocked),
+          ),
         ],
       ),
       drawer: _isDocked ? null : _buildControlPanel(),
@@ -473,7 +628,11 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           if (_isDocked) SizedBox(width: 320, child: _buildControlPanel()),
           if (_isDocked) const VerticalDivider(width: 1, thickness: 1),
-          Expanded(child: _isLoadingView ? const Center(child: CircularProgressIndicator()) : _buildDataGrid()),
+          Expanded(
+            child: _isLoadingView
+                ? const Center(child: CircularProgressIndicator())
+                : _buildDataGrid(),
+          ),
         ],
       ),
     );
