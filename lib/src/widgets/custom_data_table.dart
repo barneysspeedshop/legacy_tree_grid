@@ -79,9 +79,20 @@ class CustomDataTable extends StatefulWidget {
   final String isEffectivelyVisibleKey;
   // --- Custom Rendering Properties ---
   final double scale;
-  final Widget Function(BuildContext context, List<DataColumnDef> columns)? headerRowBuilder;
-  final Widget Function(BuildContext context, List<DataColumnDef> columns, List<double> columnWidths)? filterRowBuilder;
-  final Widget Function(BuildContext context, Map<String, dynamic> rowData, List<DataColumnDef> columns)? rowBuilder;
+  final Widget Function(BuildContext context, List<DataColumnDef> columns)?
+  headerRowBuilder;
+  final Widget Function(
+    BuildContext context,
+    List<DataColumnDef> columns,
+    List<double> columnWidths,
+  )?
+  filterRowBuilder;
+  final Widget Function(
+    BuildContext context,
+    Map<String, dynamic> rowData,
+    List<DataColumnDef> columns,
+  )?
+  rowBuilder;
   final double Function(Map<String, dynamic> rowData)? rowHeightBuilder;
 
   /// The border to display between rows and columns.
@@ -179,25 +190,43 @@ class CustomDataTable extends StatefulWidget {
     this.noDataMessage = 'No records found',
     this.onHeaderCheckboxChanged,
   }) : assert(
-         !showCheckboxColumn || (rowIdKey != null && selectedRowIds != null && onSelectionChanged != null),
+         !showCheckboxColumn ||
+             (rowIdKey != null &&
+                 selectedRowIds != null &&
+                 onSelectionChanged != null),
          'If showCheckboxColumn is true, rowIdKey, selectedRowIds, and onSelectionChanged must be provided.',
        ),
-       assert(!isTree || (rowIdKey != null && onToggleExpansion != null), 'If isTree is true, rowIdKey and onToggleExpansion must be provided.');
+       assert(
+         !isTree || (rowIdKey != null && onToggleExpansion != null),
+         'If isTree is true, rowIdKey and onToggleExpansion must be provided.',
+       );
 
-  static Widget buildStatusCell(BuildContext context, dynamic rawValue, String displayValue, double scale) {
+  static Widget buildStatusCell(
+    BuildContext context,
+    dynamic rawValue,
+    String displayValue,
+    double scale,
+  ) {
     final theme = Theme.of(context);
-    final defaultRowTextColor = theme.textTheme.bodyMedium?.color ?? (theme.brightness == Brightness.dark ? Colors.white : Colors.black);
+    final defaultRowTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        (theme.brightness == Brightness.dark ? Colors.white : Colors.black);
 
     Color? cellBackgroundColor;
     Color? cellTextColor = defaultRowTextColor;
 
     if (rawValue is Map<String, dynamic>) {
       if (rawValue.containsKey('color')) {
-        cellBackgroundColor = parseColorHex(rawValue['color'] as String?, Colors.transparent);
+        cellBackgroundColor = parseColorHex(
+          rawValue['color'] as String?,
+          Colors.transparent,
+        );
       }
       if (rawValue.containsKey('textColor')) {
         final textColorHex = rawValue['textColor'] as String?;
-        cellTextColor = textColorHex == '0' ? Colors.black : parseColorHex(textColorHex, defaultRowTextColor);
+        cellTextColor = textColorHex == '0'
+            ? Colors.black
+            : parseColorHex(textColorHex, defaultRowTextColor);
       }
     }
 
@@ -214,7 +243,10 @@ class CustomDataTable extends StatefulWidget {
           width: double.infinity,
           alignment: Alignment.center,
           padding: EdgeInsets.symmetric(vertical: 2.0 * scale),
-          decoration: BoxDecoration(color: cellBackgroundColor, borderRadius: BorderRadius.circular(2.0)),
+          decoration: BoxDecoration(
+            color: cellBackgroundColor,
+            borderRadius: BorderRadius.circular(2.0),
+          ),
           child: textWidget,
         ),
       );
@@ -261,7 +293,8 @@ class _CustomDataTableState extends State<CustomDataTable> {
   @override
   void didUpdateWidget(covariant CustomDataTable oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.columns.length != oldWidget.columns.length || widget.initialColumnWidths != oldWidget.initialColumnWidths) {
+    if (widget.columns.length != oldWidget.columns.length ||
+        widget.initialColumnWidths != oldWidget.initialColumnWidths) {
       setState(() {
         _widthsInitialized = false;
         if (widget.initialColumnWidths != null) {
@@ -293,13 +326,19 @@ class _CustomDataTableState extends State<CustomDataTable> {
           .entries
           .map((entry) {
             final int index = entry.key;
-            final bool isDraggable = widget.allowColumnResize && widget.columns[index].resizable && widget.columns[index + 1].resizable;
+            final bool isDraggable =
+                widget.allowColumnResize &&
+                widget.columns[index].resizable &&
+                widget.columns[index + 1].resizable;
             return isDraggable ? 10.0 : 1.0;
           })
           .reduce((a, b) => a + b);
     }
 
-    double totalAvailableWidth = constraints.maxWidth - (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) - dividerTotalWidth;
+    double totalAvailableWidth =
+        constraints.maxWidth -
+        (widget.showCheckboxColumn ? _checkboxColumnWidth : 0) -
+        dividerTotalWidth;
     if (totalAvailableWidth < 0) totalAvailableWidth = 0;
 
     double remainingWidth = totalAvailableWidth;
@@ -330,7 +369,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
             final col = widget.columns[i];
             double flexWidth = (col.flex ?? 1) * widthPerFlex;
             double min = col.minWidth * widget.scale;
-            double? max = col.maxWidth != null ? col.maxWidth! * widget.scale : null;
+            double? max = col.maxWidth != null
+                ? col.maxWidth! * widget.scale
+                : null;
 
             if (flexWidth < min) {
               calculatedWidths[i] = min;
@@ -376,7 +417,10 @@ class _CustomDataTableState extends State<CustomDataTable> {
           .entries
           .map((entry) {
             final int index = entry.key;
-            final bool isDraggable = widget.allowColumnResize && widget.columns[index].resizable && widget.columns[index + 1].resizable;
+            final bool isDraggable =
+                widget.allowColumnResize &&
+                widget.columns[index].resizable &&
+                widget.columns[index + 1].resizable;
             return isDraggable ? 10.0 : 1.0;
           })
           .reduce((a, b) => a + b);
@@ -396,11 +440,17 @@ class _CustomDataTableState extends State<CustomDataTable> {
 
       if (newLeftWidth < leftColumn.minWidth) {
         newLeftWidth = leftColumn.minWidth;
-        newRightWidth = _columnWidths[columnIndex] + _columnWidths[columnIndex + 1] - newLeftWidth;
+        newRightWidth =
+            _columnWidths[columnIndex] +
+            _columnWidths[columnIndex + 1] -
+            newLeftWidth;
       }
       if (newRightWidth < rightColumn.minWidth) {
         newRightWidth = rightColumn.minWidth;
-        newLeftWidth = _columnWidths[columnIndex] + _columnWidths[columnIndex + 1] - newRightWidth;
+        newLeftWidth =
+            _columnWidths[columnIndex] +
+            _columnWidths[columnIndex + 1] -
+            newRightWidth;
       }
 
       _columnWidths[columnIndex] = newLeftWidth;
@@ -410,13 +460,18 @@ class _CustomDataTableState extends State<CustomDataTable> {
   }
 
   Widget _buildSelectAllCheckboxWidget() {
-    final displayedIds = widget.rows.map((row) => _extractValue(row, widget.rowIdKey!).toString()).toSet();
-    final selectedDisplayedIds = widget.selectedRowIds!.intersection(displayedIds);
+    final displayedIds = widget.rows
+        .map((row) => _extractValue(row, widget.rowIdKey!).toString())
+        .toSet();
+    final selectedDisplayedIds = widget.selectedRowIds!.intersection(
+      displayedIds,
+    );
 
     bool? isChecked;
     if (selectedDisplayedIds.isEmpty && displayedIds.isNotEmpty) {
       isChecked = false;
-    } else if (selectedDisplayedIds.length == displayedIds.length && displayedIds.isNotEmpty) {
+    } else if (selectedDisplayedIds.length == displayedIds.length &&
+        displayedIds.isNotEmpty) {
       isChecked = true;
     } else if (selectedDisplayedIds.isNotEmpty) {
       isChecked = null;
@@ -450,18 +505,29 @@ class _CustomDataTableState extends State<CustomDataTable> {
 
   Widget _buildMergedHeaderAndFilter() {
     final bool showCheckbox = widget.showCheckboxColumn;
-    final bool hasDragHandle = widget.columns.isNotEmpty && widget.columns.first.isDragHandle;
-    final dividerColor = widget.border?.verticalInside.color ?? Theme.of(context).dividerColor.withValues(alpha: 0.5);
+    final bool hasDragHandle =
+        widget.columns.isNotEmpty && widget.columns.first.isDragHandle;
+    final dividerColor =
+        widget.border?.verticalInside.color ??
+        Theme.of(context).dividerColor.withValues(alpha: 0.5);
 
     return Container(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (hasDragHandle) ...[SizedBox(width: _columnWidths[0]), VerticalDivider(width: 1.0, thickness: 0.5, color: dividerColor)],
-          if (showCheckbox) ...[_buildSelectAllCheckboxWidget(), VerticalDivider(width: 1.0, thickness: 0.5, color: dividerColor)],
+          if (hasDragHandle) ...[
+            SizedBox(width: _columnWidths[0]),
+            VerticalDivider(width: 1.0, thickness: 0.5, color: dividerColor),
+          ],
+          if (showCheckbox) ...[
+            _buildSelectAllCheckboxWidget(),
+            VerticalDivider(width: 1.0, thickness: 0.5, color: dividerColor),
+          ],
           Expanded(
             child: Column(
               children: [
@@ -471,7 +537,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
                 ),
                 if (widget.allowFiltering)
                   Expanded(
-                    flex: ((widget.filterRowHeight ?? widget.dataRowHeight) * 100).toInt(),
+                    flex:
+                        ((widget.filterRowHeight ?? widget.dataRowHeight) * 100)
+                            .toInt(),
                     child: _buildFilterRow(skipFirst: hasDragHandle),
                   ),
               ],
@@ -483,15 +551,19 @@ class _CustomDataTableState extends State<CustomDataTable> {
   }
 
   Widget _buildHeader() {
-    final bool hasDragHandle = widget.columns.isNotEmpty && widget.columns.first.isDragHandle;
+    final bool hasDragHandle =
+        widget.columns.isNotEmpty && widget.columns.first.isDragHandle;
     return _DataTableHeader(
       columns: hasDragHandle ? widget.columns.skip(1).toList() : widget.columns,
-      columnWidths: hasDragHandle ? _columnWidths.skip(1).toList() : _columnWidths,
+      columnWidths: hasDragHandle
+          ? _columnWidths.skip(1).toList()
+          : _columnWidths,
       onSort: widget.onSort,
       sortColumnId: widget.sortColumnId,
       sortAscending: widget.sortAscending,
       allowColumnResize: widget.allowColumnResize,
-      onColumnResize: (details, index) => _handleDragUpdate(details, hasDragHandle ? index + 1 : index),
+      onColumnResize: (details, index) =>
+          _handleDragUpdate(details, hasDragHandle ? index + 1 : index),
       border: widget.border,
       showCheckboxColumn: false,
       rows: widget.rows,
@@ -507,8 +579,12 @@ class _CustomDataTableState extends State<CustomDataTable> {
   }
 
   Widget _buildFilterRow({bool skipFirst = false}) {
-    if (!widget.allowFiltering || widget.filterRowBuilder == null) return const SizedBox.shrink();
-    final columns = skipFirst ? widget.columns.skip(1).toList() : widget.columns;
+    if (!widget.allowFiltering || widget.filterRowBuilder == null) {
+      return const SizedBox.shrink();
+    }
+    final columns = skipFirst
+        ? widget.columns.skip(1).toList()
+        : widget.columns;
     final widths = skipFirst ? _columnWidths.skip(1).toList() : _columnWidths;
     return widget.filterRowBuilder!(context, columns, widths);
   }
@@ -519,10 +595,18 @@ class _CustomDataTableState extends State<CustomDataTable> {
     widget.onRowTap?.call(rowData);
   }
 
-  Widget _buildRow(BuildContext context, Map<String, dynamic> rowData, int index, List<Map<String, dynamic>> rows) {
-    if (widget.rowBuilder != null) return widget.rowBuilder!(context, rowData, widget.columns);
+  Widget _buildRow(
+    BuildContext context,
+    Map<String, dynamic> rowData,
+    int index,
+    List<Map<String, dynamic>> rows,
+  ) {
+    if (widget.rowBuilder != null) {
+      return widget.rowBuilder!(context, rowData, widget.columns);
+    }
     final rowId = _extractValue(rowData, widget.rowIdKey!).toString();
-    final double dynamicRowHeight = widget.rowHeightBuilder?.call(rowData) ?? widget.dataRowHeight;
+    final double dynamicRowHeight =
+        widget.rowHeightBuilder?.call(rowData) ?? widget.dataRowHeight;
 
     return _DataTableRow(
       rowData: rowData,
@@ -531,7 +615,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
       columnWidths: _columnWidths,
       rowId: rowId,
       isHovered: _hoveredRowId == rowId,
-      isSelected: _selectedRowId == rowId || (widget.selectedRowIds?.contains(rowId) ?? false),
+      isSelected:
+          _selectedRowId == rowId ||
+          (widget.selectedRowIds?.contains(rowId) ?? false),
       onHover: (hovering) {
         if (mounted) setState(() => _hoveredRowId = hovering ? rowId : null);
       },
@@ -564,7 +650,8 @@ class _CustomDataTableState extends State<CustomDataTable> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if ((_lastConstraints != constraints || widget.scale != _lastScale) && widget.initialColumnWidths == null) {
+        if ((_lastConstraints != constraints || widget.scale != _lastScale) &&
+            widget.initialColumnWidths == null) {
           _lastConstraints = constraints;
           _lastScale = widget.scale;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -581,7 +668,9 @@ class _CustomDataTableState extends State<CustomDataTable> {
             controller: _horizontalScrollController,
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: totalWidth > constraints.maxWidth ? totalWidth : constraints.maxWidth,
+              width: totalWidth > constraints.maxWidth
+                  ? totalWidth
+                  : constraints.maxWidth,
               child: Scrollbar(
                 controller: _scrollController,
                 thumbVisibility: true,
@@ -591,8 +680,18 @@ class _CustomDataTableState extends State<CustomDataTable> {
                     SliverPersistentHeader(
                       pinned: true,
                       delegate: _SliverHeaderDelegate(
-                        height: (widget.headerHeight + (widget.allowFiltering ? (widget.filterRowHeight ?? widget.dataRowHeight) : 0)) * widget.scale + 1.0,
-                        child: Material(color: Theme.of(context).canvasColor, child: _buildMergedHeaderAndFilter()),
+                        height:
+                            (widget.headerHeight +
+                                    (widget.allowFiltering
+                                        ? (widget.filterRowHeight ??
+                                              widget.dataRowHeight)
+                                        : 0)) *
+                                widget.scale +
+                            1.0,
+                        child: Material(
+                          color: Theme.of(context).canvasColor,
+                          child: _buildMergedHeaderAndFilter(),
+                        ),
                       ),
                     ),
                     SliverPadding(
@@ -600,8 +699,19 @@ class _CustomDataTableState extends State<CustomDataTable> {
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final rowData = widget.rows[index];
-                          final rowId = _extractValue(rowData, widget.rowIdKey!).toString();
-                          return KeyedSubtree(key: ValueKey(rowId), child: _buildRow(context, rowData, index, widget.rows));
+                          final rowId = _extractValue(
+                            rowData,
+                            widget.rowIdKey!,
+                          ).toString();
+                          return KeyedSubtree(
+                            key: ValueKey(rowId),
+                            child: _buildRow(
+                              context,
+                              rowData,
+                              index,
+                              widget.rows,
+                            ),
+                          );
                         }, childCount: widget.rows.length),
                       ),
                     ),
@@ -724,12 +834,16 @@ class _DataTableRowState extends State<_DataTableRow> {
 
   bool _isDescendant(int ancestorIndex, int targetIndex) {
     if (ancestorIndex < 0 || ancestorIndex >= widget.rows.length) return false;
-    if (targetIndex <= ancestorIndex || targetIndex >= widget.rows.length) return false;
+    if (targetIndex <= ancestorIndex || targetIndex >= widget.rows.length) {
+      return false;
+    }
 
-    final ancestorLevel = widget.rows[ancestorIndex][widget.indentationLevelKey] as int? ?? 0;
+    final ancestorLevel =
+        widget.rows[ancestorIndex][widget.indentationLevelKey] as int? ?? 0;
 
     for (int i = ancestorIndex + 1; i <= targetIndex; i++) {
-      final currentLevel = widget.rows[i][widget.indentationLevelKey] as int? ?? 0;
+      final currentLevel =
+          widget.rows[i][widget.indentationLevelKey] as int? ?? 0;
       if (currentLevel <= ancestorLevel) return false;
     }
     return true;
@@ -745,7 +859,9 @@ class _DataTableRowState extends State<_DataTableRow> {
             value: widget.isSelected,
             onChanged: (value) {
               if (value == null) return;
-              final newSelection = Set<String>.from(widget.selectedRowIds ?? {});
+              final newSelection = Set<String>.from(
+                widget.selectedRowIds ?? {},
+              );
               if (value) {
                 newSelection.add(widget.rowId);
               } else {
@@ -759,7 +875,13 @@ class _DataTableRowState extends State<_DataTableRow> {
     );
   }
 
-  Widget _buildDecoratedRow({required Widget content, required Color rowColor, required double rowHeight, required ThemeData theme, required bool isDragging}) {
+  Widget _buildDecoratedRow({
+    required Widget content,
+    required Color rowColor,
+    required double rowHeight,
+    required ThemeData theme,
+    required bool isDragging,
+  }) {
     return Opacity(
       opacity: isDragging ? 0.35 : 1.0,
       child: Container(
@@ -767,16 +889,23 @@ class _DataTableRowState extends State<_DataTableRow> {
         decoration: BoxDecoration(
           color: rowColor,
           border: Border(
-            bottom: BorderSide(color: theme.dividerColor, width: widget.border?.horizontalInside.width ?? 0.5),
+            bottom: BorderSide(
+              color: theme.dividerColor,
+              width: widget.border?.horizontalInside.width ?? 0.5,
+            ),
           ),
         ),
         child: InkWell(
           onHover: widget.onHover,
           onTap: () => widget.onRowTap(widget.rowData),
-          onDoubleTap: widget.onRowDoubleTap != null ? () => widget.onRowDoubleTap!(widget.rowData) : null,
+          onDoubleTap: widget.onRowDoubleTap != null
+              ? () => widget.onRowDoubleTap!(widget.rowData)
+              : null,
           child: GestureDetector(
             onSecondaryTapUp: (d) {
-              final actionCol = widget.columns.where((c) => c.itemsBuilder != null).firstOrNull;
+              final actionCol = widget.columns
+                  .where((c) => c.itemsBuilder != null)
+                  .firstOrNull;
               if (actionCol != null) {
                 showContextMenu(
                   context: context,
@@ -794,7 +923,8 @@ class _DataTableRowState extends State<_DataTableRow> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isTree && !(widget.rowData[widget.isEffectivelyVisibleKey] as bool? ?? true)) {
+    if (widget.isTree &&
+        !(widget.rowData[widget.isEffectivelyVisibleKey] as bool? ?? true)) {
       return const SizedBox.shrink();
     }
 
@@ -802,7 +932,9 @@ class _DataTableRowState extends State<_DataTableRow> {
     final rowHeight = widget.rowHeight * widget.scale;
     final rowColor = widget.isSelected
         ? theme.highlightColor.withValues(alpha: widget.isHovered ? 0.45 : 0.3)
-        : (widget.isHovered ? (widget.rowHoverColor ?? theme.hoverColor) : Colors.transparent);
+        : (widget.isHovered
+              ? (widget.rowHoverColor ?? theme.hoverColor)
+              : Colors.transparent);
 
     Widget buildRowContent({required bool isFeedback}) {
       return Row(
@@ -811,12 +943,24 @@ class _DataTableRowState extends State<_DataTableRow> {
           final column = widget.columns[colIndex];
           final width = widget.columnWidths[colIndex];
           final raw = _extractValue(widget.rowData, column.id);
-          final display = column.formattedValue?.call(raw, widget.rowData) ?? raw?.toString() ?? '';
+          final display =
+              column.formattedValue?.call(raw, widget.rowData) ??
+              raw?.toString() ??
+              '';
 
           Widget cell =
-              column.cellBuilder?.call(context, raw, display, widget.scale, widget.rowData) ??
+              column.cellBuilder?.call(
+                context,
+                raw,
+                display,
+                widget.scale,
+                widget.rowData,
+              ) ??
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: (column.useCellPadding ? 8.0 : 0.0) * widget.scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal:
+                      (column.useCellPadding ? 8.0 : 0.0) * widget.scale,
+                ),
                 child: Align(
                   alignment: _textAlignToAlignment(column.alignment),
                   child: Text(
@@ -828,9 +972,12 @@ class _DataTableRowState extends State<_DataTableRow> {
               );
 
           if (widget.isTree && column.isNameColumn) {
-            final indent = widget.rowData[widget.indentationLevelKey] as int? ?? 0;
-            final hasKids = widget.rowData[widget.hasChildrenKey] as bool? ?? false;
-            final expanded = widget.rowData[widget.isExpandedKey] as bool? ?? false;
+            final indent =
+                widget.rowData[widget.indentationLevelKey] as int? ?? 0;
+            final hasKids =
+                widget.rowData[widget.hasChildrenKey] as bool? ?? false;
+            final expanded =
+                widget.rowData[widget.isExpandedKey] as bool? ?? false;
             cell = Row(
               children: [
                 SizedBox(width: indent * 20.0 * widget.scale),
@@ -840,8 +987,10 @@ class _DataTableRowState extends State<_DataTableRow> {
                     child: Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: expanded
-                          ? (widget.treeIconExpanded ?? const Icon(Icons.expand_more, size: 20))
-                          : (widget.treeIconCollapsed ?? const Icon(Icons.chevron_right, size: 20)),
+                          ? (widget.treeIconExpanded ??
+                                const Icon(Icons.expand_more, size: 20))
+                          : (widget.treeIconCollapsed ??
+                                const Icon(Icons.chevron_right, size: 20)),
                     ),
                   )
                 else
@@ -882,23 +1031,42 @@ class _DataTableRowState extends State<_DataTableRow> {
             SizedBox(
               width: width,
               child: Opacity(
-                opacity: (column.showOnRowHover && !widget.isHovered) ? 0.0 : 1.0,
-                child: IgnorePointer(ignoring: column.showOnRowHover && !widget.isHovered, child: finalCell),
+                opacity: (column.showOnRowHover && !widget.isHovered)
+                    ? 0.0
+                    : 1.0,
+                child: IgnorePointer(
+                  ignoring: column.showOnRowHover && !widget.isHovered,
+                  child: finalCell,
+                ),
               ),
             ),
             VerticalDivider(
-              width: (widget.allowColumnResize && colIndex < widget.columns.length - 1 && column.resizable && widget.columns[colIndex + 1].resizable)
+              width:
+                  (widget.allowColumnResize &&
+                      colIndex < widget.columns.length - 1 &&
+                      column.resizable &&
+                      widget.columns[colIndex + 1].resizable)
                   ? 10.0
                   : 1.0,
               thickness: 0.5,
-              color: widget.border?.verticalInside.color ?? theme.dividerColor.withValues(alpha: 0.5),
+              color:
+                  widget.border?.verticalInside.color ??
+                  theme.dividerColor.withValues(alpha: 0.5),
             ),
           ];
 
-          if (colIndex == 0 && column.isDragHandle && widget.showCheckboxColumn) {
+          if (colIndex == 0 &&
+              column.isDragHandle &&
+              widget.showCheckboxColumn) {
             cellStack.addAll([
               _buildRowCheckbox(),
-              VerticalDivider(width: 1.0, thickness: 0.5, color: widget.border?.verticalInside.color ?? theme.dividerColor.withValues(alpha: 0.5)),
+              VerticalDivider(
+                width: 1.0,
+                thickness: 0.5,
+                color:
+                    widget.border?.verticalInside.color ??
+                    theme.dividerColor.withValues(alpha: 0.5),
+              ),
             ]);
           }
           return cellStack;
@@ -924,7 +1092,10 @@ class _DataTableRowState extends State<_DataTableRow> {
       onLeave: (_) => _clearDragState(),
       onAcceptWithDetails: (d) {
         if (_dropZone == 'inside') {
-          final draggedId = _extractValue(widget.rows[d.data], widget.rowIdKey).toString();
+          final draggedId = _extractValue(
+            widget.rows[d.data],
+            widget.rowIdKey,
+          ).toString();
           widget.onNest?.call(draggedId, widget.rowId);
         } else if (_dropZone == 'before') {
           widget.onReorder?.call(d.data, widget.index);
@@ -937,8 +1108,20 @@ class _DataTableRowState extends State<_DataTableRow> {
         clipBehavior: Clip.none,
         children: [
           decorated,
-          if (_dropZone == 'before') Positioned(top: -2, left: 0, right: 0, child: Container(height: 4, color: Colors.blueAccent)),
-          if (_dropZone == 'after') Positioned(bottom: -2, left: 0, right: 0, child: Container(height: 4, color: Colors.blueAccent)),
+          if (_dropZone == 'before')
+            Positioned(
+              top: -2,
+              left: 0,
+              right: 0,
+              child: Container(height: 4, color: Colors.blueAccent),
+            ),
+          if (_dropZone == 'after')
+            Positioned(
+              bottom: -2,
+              left: 0,
+              right: 0,
+              child: Container(height: 4, color: Colors.blueAccent),
+            ),
           if (_dropZone == 'inside')
             Positioned.fill(
               child: Container(
@@ -999,7 +1182,9 @@ class _DataTableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: showBottomBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor)) : null,
+        border: showBottomBorder
+            ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor))
+            : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1008,28 +1193,45 @@ class _DataTableHeader extends StatelessWidget {
           final activeSort = sortColumnId == col.id;
           final headerText = Text(
             col.caption,
-            style: (Theme.of(context).textTheme.titleSmall ?? TextStyle(fontSize: 14.0 * scale)).copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14.0) * scale,
-            ),
+            style:
+                (Theme.of(context).textTheme.titleSmall ??
+                        TextStyle(fontSize: 14.0 * scale))
+                    .copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize:
+                          (Theme.of(context).textTheme.titleSmall?.fontSize ??
+                              14.0) *
+                          scale,
+                    ),
             overflow: TextOverflow.ellipsis,
             textAlign: col.headerAlignment,
           );
 
           Widget header = InkWell(
-            onTap: col.sortable && onSort != null ? () => onSort!(col.id) : null,
+            onTap: col.sortable && onSort != null
+                ? () => onSort!(col.id)
+                : null,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: (col.useCellPadding ? 8.0 : 0.0) * scale),
+              padding: EdgeInsets.symmetric(
+                horizontal: (col.useCellPadding ? 8.0 : 0.0) * scale,
+              ),
               child: Row(
-                mainAxisAlignment: _textAlignToMainAxisAlignment(col.headerAlignment),
+                mainAxisAlignment: _textAlignToMainAxisAlignment(
+                  col.headerAlignment,
+                ),
                 children: [
                   Expanded(child: headerText),
                   if (activeSort) ...[
                     const SizedBox(width: 6),
                     activeSort
                         ? (sortAscending
-                              ? (sortIconAscending ?? Icon(Icons.arrow_upward, size: 16 * scale))
-                              : (sortIconDescending ?? Icon(Icons.arrow_downward, size: 16 * scale)))
+                              ? (sortIconAscending ??
+                                    Icon(Icons.arrow_upward, size: 16 * scale))
+                              : (sortIconDescending ??
+                                    Icon(
+                                      Icons.arrow_downward,
+                                      size: 16 * scale,
+                                    )))
                         : const SizedBox.shrink(),
                   ],
                 ],
@@ -1049,9 +1251,17 @@ class _DataTableHeader extends StatelessWidget {
           final widgets = [
             SizedBox(width: columnWidths[index], child: header),
             VerticalDivider(
-              width: (allowColumnResize && index < columns.length - 1 && col.resizable && columns[index + 1].resizable) ? 10.0 : 1.0,
+              width:
+                  (allowColumnResize &&
+                      index < columns.length - 1 &&
+                      col.resizable &&
+                      columns[index + 1].resizable)
+                  ? 10.0
+                  : 1.0,
               thickness: 0.5,
-              color: border?.verticalInside.color ?? Theme.of(context).dividerColor.withValues(alpha: 0.5),
+              color:
+                  border?.verticalInside.color ??
+                  Theme.of(context).dividerColor.withValues(alpha: 0.5),
             ),
           ];
           return widgets;
@@ -1072,5 +1282,6 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get minExtent => height;
   @override
-  bool shouldRebuild(_SliverHeaderDelegate oldDelegate) => oldDelegate.child != child || oldDelegate.height != height;
+  bool shouldRebuild(_SliverHeaderDelegate oldDelegate) =>
+      oldDelegate.child != child || oldDelegate.height != height;
 }
